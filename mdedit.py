@@ -11,4 +11,4 @@ with tab1:
     st.session_state.text = st.text_area("Edit Markdown:", st.session_state.text, height=800)
 
 with tab2:
-    st.markdown(st.session_state.text)
+    st.markdown(st.session_state.text, unsafe_allow_html=True)
