@@ -44,7 +44,9 @@ st.set_page_config(layout="wide", page_title="Markdown Editor", page_icon="📝"
 st.session_state.text = st.session_state.get("text", "")
 st.session_state.file_name = st.session_state.get("file_name", "")
 
-st.title(st.session_state.file_name)
+if st.session_state.file_name != "":
+    st.subheader(st.session_state.file_name + '.md')
+
 tab1, tab2, tab3 = st.tabs(["File", "Edit", "Preview"])
 with tab1:
     st.markdown("**New File**")
@@ -93,7 +95,7 @@ with tab1:
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("Save File"):
-            save_text_file(file_content, new_filename)
+            save_text_file()
             st.rerun()
 
 with tab2:
