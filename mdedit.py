@@ -58,9 +58,9 @@ with tab1:
             if file_name:
                 st.session_state.file_name = file_name
                 st.session_state.text = ""
+                st.rerun()
             else:
                 st.error("Please enter a file name.")
-            st.rerun()
 
     st.markdown("**Open File**")
     col1, col2, col3 = st.columns(3)
@@ -75,21 +75,22 @@ with tab1:
             if selected_file:
                 load_file_content(selected_file)
                 st.session_state.file_name = os.path.splitext(selected_file)[0]
+                st.rerun()
             else:
                 st.error("No files found in the directory.")
-            st.rerun()
 
     st.markdown("**Upload File**")
     col1, col2, col3 = st.columns(3)
     with col1:
-        uploaded_file = st.file_uploader("Choose a text file", type=["md", "txt"])
-        if uploaded_file is not None:
-            file_name = uploaded_file.name
-            file_content = uploaded_file.read().decode("utf-8")
-
-            st.session_state.file_name = os.path.splitext(file_name)[0]
-            st.session_state.text = file_content
-            #st.rerun()
+        uploaded_file = st.file_uploader("Choose a text file", type=["md", "txt"], label_visibility="collapsed")
+    with col2:
+        if st.button("Upload"):
+            if uploaded_file is not None:
+                st.session_state.file_name = os.path.splitext(uploaded_file.name)[0]
+                st.session_state.text = uploaded_file.read().decode("utf-8")
+                st.rerun()
+            else:
+                st.error("No files found in the directory.")
 
     st.markdown("**Save File**")
     col1, col2, col3 = st.columns(3)
