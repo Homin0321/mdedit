@@ -105,6 +105,7 @@ def update_last_modified(file_name):
 def get_word_count(text):
     return len(re.findall(r'\w+', text))
 
+@st.cache_data
 def create_toc(text):
     headers = re.findall(r'^(#{1,6})\s+(.+)$', text, re.MULTILINE)
     if headers:
