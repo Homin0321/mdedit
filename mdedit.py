@@ -139,13 +139,26 @@ def main():
                 st.write(f"Last modified: {st.session_state.last_modified}")
             st.write(f"Word count: {get_word_count(st.session_state.text)}")
 
-    tab1, tab2 = st.tabs(["Edit", "Preview"])
+    tab1, tab2, tab3 = st.tabs(["Edit", "Preview", "ToC"])
 
     with tab1:
         st.text_area("Edit:", key="text", height=600, label_visibility="collapsed")
 
     with tab2:
         st.markdown(st.session_state.text)
+
+    with tab3:
+        # Markdown header
+        headers = re.findall(r'^(#{1,6})\s+(.+)$', st.session_state.text, re.MULTILINE)
+        if headers:
+            toc =""
+            for header in headers:
+                level = len(header[0])
+                title = header[1]
+                toc += f"{'  '*(level-1)}* {title}" + '\n'
+            st.markdown(toc)
+        else:
+            st.write("No headers found in the document.")
 
 if __name__ == "__main__":
     main()
