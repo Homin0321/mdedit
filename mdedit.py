@@ -105,6 +105,9 @@ def update_last_modified(file_name):
 def get_word_count(text):
     return len(re.findall(r'\w+', text))
 
+def get_line_count(text):
+    return text.count('\n') + 1
+
 @st.cache_data
 def create_toc(text):
     headers = re.findall(r'^(#{1,6})\s+(.+)$', text, re.MULTILINE)
@@ -164,7 +167,7 @@ def main():
         if st.session_state.file_name:
             if hasattr(st.session_state, 'last_modified'):
                 st.write(f"Last modified: {st.session_state.last_modified}")
-            st.write(f"Word count: {get_word_count(st.session_state.text)}")
+            st.write(f"{get_word_count(st.session_state.text)} words, {get_line_count(st.session_state.text)} lines")
             st.session_state.height = st.slider("Text Box Height:", 100, 1000, 600, 100)
 
     tab1, tab2 = st.tabs(["Edit", "Preview"])
@@ -175,8 +178,7 @@ def main():
     with tab2:
         toc, content = create_toc(st.session_state.text)
         if toc:
-            st.session_state.toc = toc
-            with st.expander("Table of Contents"):
+            with st.popover("Table of Contents"):
                 st.markdown(toc, unsafe_allow_html=True)
         
         with st.container(border=False, height=st.session_state.height):
