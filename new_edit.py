@@ -1,17 +1,20 @@
 import streamlit as st
-from streamlit_js_eval import streamlit_js_eval
 import os
 
+# Constants
 UPLOADS_DIR = "uploads"
 
 # Ensure the upload directory exists
 if not os.path.exists(UPLOADS_DIR):
     os.makedirs(UPLOADS_DIR)
 
+# Helper functions
 def get_files_list():
+    """Returns a list of files in the UPLOADS_DIR."""
     return [f for f in os.listdir(UPLOADS_DIR) if os.path.isfile(os.path.join(UPLOADS_DIR, f))]
 
 def load_file_content(selected_file):
+    """Loads the content of the selected file into session state."""
     file_path = os.path.join(UPLOADS_DIR, selected_file)
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -28,6 +31,7 @@ def save_text_file():
 
     file_name = st.session_state.file_name + '.md'
     file_content = st.session_state.text
+
     try:
         with open(os.path.join(UPLOADS_DIR, file_name), "w", encoding="utf-8") as f:
             f.write(file_content)
@@ -36,6 +40,7 @@ def save_text_file():
         st.error(f"Error saving file '{file_name}': {e}")
 
 def create_new_file():
+    """Creates a new file by clearing session state."""
     new_file_name = st.session_state.new_file
     if new_file_name:
         if os.path.exists(os.path.join(UPLOADS_DIR, new_file_name + '.md')):
@@ -47,8 +52,10 @@ def create_new_file():
             st.success(f"New file '{new_file_name}.md' created successfully!")
 
 def rename_file():
+    """Renames the current file."""
     old_file_name = st.session_state.file_name + '.md'
     new_file_name = st.session_state.rename_file + '.md'
+    
     if new_file_name != old_file_name:
         old_file_path = os.path.join(UPLOADS_DIR, old_file_name)
         new_file_path = os.path.join(UPLOADS_DIR, new_file_name)
@@ -67,6 +74,7 @@ def rename_file():
         st.warning("The new file name is the same as the current one.")
 
 def delete_file():
+    """Deletes the current file after confirmation."""
     file_name = st.session_state.file_name + '.md'
     if st.checkbox(f"Confirm delete '{file_name}'?"):
         try:
@@ -78,12 +86,14 @@ def delete_file():
             st.error(f"Error deleting file '{file_name}': {e}")
 
 def open_file():
+    """Loads the selected file."""
     selected_file = st.session_state.open_file
     if selected_file:
         load_file_content(selected_file)
         st.session_state.file_name = os.path.splitext(selected_file)[0]
 
 def upload_file():
+    """Handles the file upload process."""
     uploaded_file = st.session_state.upload_file
     if uploaded_file:
         st.session_state.file_name = os.path.splitext(uploaded_file.name)[0]
@@ -93,19 +103,23 @@ def upload_file():
         except Exception as e:
             st.error(f"Error uploading file: {e}")
 
-def reload():
-    streamlit_js_eval(js_expressions="parent.window.location.reload()")
+# Initialize session state variables
+if 'text' not in st.session_state:
+    st.session_state.text = ""
+if 'file_name' not in st.session_state:
+    st.session_state.file_name = ""
 
-# Set up the page configuration
+# Page configuration
 st.set_page_config(layout="wide", page_title="Markdown Editor", page_icon="📝")
 
-st.session_state.text = st.session_state.get("text", "")
-st.session_state.file_name = st.session_state.get("file_name", "")
-
+# Display current file name if available
 if st.session_state.file_name:
-    st.subheader(st.session_state.file_name + '.md')
+    st.subheader(f"Editing: {st.session_state.file_name}.md")
 
+# Tabs
 tab1, tab2, tab3 = st.tabs(["File", "Edit", "Preview"])
+
+# Tab 1: File Operations
 with tab1:
     st.text_input("New File Name:", key="new_file", on_change=create_new_file, placeholder="Enter new file name")
 
@@ -120,14 +134,14 @@ with tab1:
 
     if st.button("Save File"):
         save_text_file()
-        #reload()
 
     if st.session_state.file_name and st.button("Delete File"):
         delete_file()
-        #reload()
 
+# Tab 2: Markdown Editor
 with tab2:
     st.text_area("Edit Markdown:", key="text", height=800)
 
+# Tab 3: Markdown Preview
 with tab3:
     st.markdown(st.session_state.text)
