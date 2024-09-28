@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 from datetime import datetime
-import pytz
 import re
 
 UPLOADS_DIR = "uploads"
