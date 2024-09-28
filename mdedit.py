@@ -1,8 +1,10 @@
 import streamlit as st
-from datetime import datetime
+import base64
 import html
 import os
 import re
+from datetime import datetime
+from pathlib import Path
 
 UPLOADS_DIR = "uploads"
 
@@ -108,6 +110,33 @@ def get_word_count(text):
 def get_line_count(text):
     return text.count('\n') + 1
 
+def markdown_images(markdown):
+    # example image markdown:
+    # ![Test image](images/test.png "Alternate text")
+    images = re.findall(r'(!\[(?P<image_title>[^\]]+)\]\((?P<image_path>[^\)"\s]+)\s*([^\)]*)\))', markdown)
+    return images
+
+def img_to_bytes(img_path):
+    img_bytes = Path(img_path).read_bytes()
+    encoded = base64.b64encode(img_bytes).decode()
+    return encoded
+
+def img_to_html(img_path, img_alt):
+    img_format = img_path.split(".")[-1]
+    img_html = f'<img src="data:image/{img_format.lower()};base64,{img_to_bytes(img_path)}" alt="{img_alt}" style="max-width: 100%;">'
+    return img_html
+
+def markdown_insert_images(markdown):
+    images = markdown_images(markdown)
+
+    for image in images:
+        image_markdown = image[0]
+        image_alt = image[1]
+        image_path = image[2]
+        if os.path.exists(image_path):
+            markdown = markdown.replace(image_markdown, img_to_html(image_path, image_alt))
+    return markdown
+
 @st.cache_data
 def create_toc(text):
     headers = re.findall(r'^(#{1,6})\s+(.+)$', text, re.MULTILINE)
@@ -182,6 +211,7 @@ def main():
                 st.markdown(toc, unsafe_allow_html=True)
         
         with st.container(border=False, height=st.session_state.height):
+            content = markdown_insert_images(content)
             st.markdown(content, unsafe_allow_html=True)
 
 if __name__ == "__main__":
