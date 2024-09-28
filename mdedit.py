@@ -162,6 +162,25 @@ def create_toc(text):
     else:
         return None, text
 
+@st.dialog("Found Results", width="large")
+def highlight_matches(regex):
+    try:
+        pattern = re.compile(regex)
+        content = st.session_state.text
+        for match in reversed(list(pattern.finditer(st.session_state.text))):
+            start, end = match.span()
+            content = f"{content[:start]}<span style='background-color: yellow;'>{content[start:end]}</span>{content[end:]}"
+        st.markdown(content, unsafe_allow_html=True)
+    except re.error:
+        st.toast("Invalid regular expression. Please check your input.")
+
+def replace_all_matches(text, regex, replace):
+    try:
+        return re.sub(regex, replace, text)
+    except re.error:
+        st.error("Invalid regular expression. Please check your input.")
+        return text
+
 def main():
     st.set_page_config(layout="wide", page_title="Markdown Editor", page_icon="📝")
 
@@ -202,6 +221,24 @@ def main():
     tab1, tab2 = st.tabs(["Edit", "Preview"])
 
     with tab1:
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            regex = st.text_input(" ", placeholder="Regular Expression", label_visibility="collapsed")
+        with col2:
+            find_all = st.button("Find All", use_container_width=True)
+        with col3:
+            replace = st.text_input(" ", placeholder="Replacing Text", label_visibility="collapsed")
+        with col4:
+            replace_all = st.button("Replace All", use_container_width=True)
+        
+        if find_all:
+            highlight_matches(regex)
+        if replace_all:
+            try:
+                st.session_state.text = re.sub(regex, replace, st.session_state.text)
+            except re.error:
+                st.toast("Invalid regular expression. Please check your input.")
+
         st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
 
     with tab2:
@@ -213,6 +250,7 @@ def main():
         with st.container(border=False, height=st.session_state.height):
             content = markdown_insert_images(content)
             st.markdown(content, unsafe_allow_html=True)
+
 
 if __name__ == "__main__":
     main()
