@@ -1,6 +1,6 @@
 # Streamlit Markdown Editor
 
-This is a simple yet powerful Markdown editor built with Streamlit. It allows users to create, edit, save, and preview Markdown files directly in the browser.
+This is a simple Markdown editor built with Streamlit. It allows users to create, edit, save, and preview Markdown files directly in the browser.
 
 ## Features
 
