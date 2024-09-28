@@ -1,6 +1,7 @@
 import streamlit as st
-import os
 from datetime import datetime
+import html
+import os
 import re
 
 UPLOADS_DIR = "uploads"
@@ -104,11 +105,36 @@ def update_last_modified(file_name):
 def get_word_count(text):
     return len(re.findall(r'\w+', text))
 
+def create_toc(text):
+    headers = re.findall(r'^(#{1,6})\s+(.+)$', text, re.MULTILINE)
+    if headers:
+        toc = "<div style='background-color: #f0f0f0; padding: 10px; border-radius: 5px;'>"
+        toc += "<ul style='list-style-type: none; padding-left: 0;'>"
+        for i, header in enumerate(headers):
+            level = len(header[0])
+            title = html.escape(header[1])
+            link = f"header-{i}"
+            toc += f"<li style='margin-left: {(level-1)*20}px;'>"
+            toc += f"<a href='#{link}' style='text-decoration: none; color: #333;'>"
+            toc += f"{'•' if level > 1 else ''}  {title}</a></li>"
+        toc += "</ul></div>"
+
+        content = text
+        for i, header in enumerate(headers):
+            old_header = f"{header[0]} {header[1]}"
+            new_header = f"{header[0]} <a id='header-{i}'></a>{header[1]}"
+            content = content.replace(old_header, new_header, 1)
+
+        return toc, content
+    else:
+        return None, text
+
 def main():
     st.set_page_config(layout="wide", page_title="Markdown Editor", page_icon="📝")
 
     st.session_state.text = st.session_state.get("text", "")
     st.session_state.file_name = st.session_state.get("file_name", "")
+    st.session_state.height = st.session_state.get("height", 600)
 
     with st.sidebar:
         if st.session_state.file_name:
@@ -125,40 +151,35 @@ def main():
         if st.session_state.file_name:
             st.text_input("Rename File:", st.session_state.file_name, key="rename_file", on_change=rename_file)
 
-        with st.expander("Upload File"):
-            st.file_uploader(" ", type=["md", "txt"], key="upload_file", on_change=upload_file)
-
         if st.button("Delete File", use_container_width=True):
             delete_file()
 
         if st.button("Save File", use_container_width=True):
             save_text_file()
 
+        with st.expander("Upload File"):
+            st.file_uploader(" ", type=["md", "txt"], key="upload_file", on_change=upload_file)
+
         if st.session_state.file_name:
             if hasattr(st.session_state, 'last_modified'):
                 st.write(f"Last modified: {st.session_state.last_modified}")
             st.write(f"Word count: {get_word_count(st.session_state.text)}")
+            st.session_state.height = st.slider("Text Box Height:", 100, 1000, 600, 100)
 
-    tab1, tab2, tab3 = st.tabs(["Edit", "Preview", "ToC"])
+    tab1, tab2 = st.tabs(["Edit", "Preview"])
 
     with tab1:
-        st.text_area("Edit:", key="text", height=600, label_visibility="collapsed")
+        st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
 
     with tab2:
-        st.markdown(st.session_state.text)
-
-    with tab3:
-        # Markdown header
-        headers = re.findall(r'^(#{1,6})\s+(.+)$', st.session_state.text, re.MULTILINE)
-        if headers:
-            toc =""
-            for header in headers:
-                level = len(header[0])
-                title = header[1]
-                toc += f"{'  '*(level-1)}* {title}" + '\n'
-            st.markdown(toc)
-        else:
-            st.write("No headers found in the document.")
+        toc, content = create_toc(st.session_state.text)
+        if toc:
+            st.session_state.toc = toc
+            with st.expander("Table of Contents"):
+                st.markdown(toc, unsafe_allow_html=True)
+        
+        with st.container(border=False, height=st.session_state.height):
+            st.markdown(content, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
