@@ -1,73 +1,61 @@
-# Streamlit Markdown Editor
+# Markdown Editor
 
-This is a simple Markdown editor built with Streamlit. It allows users to create, edit, save, and preview Markdown files directly in the browser.
+This Streamlit app provides a simple yet powerful Markdown editor for creating and managing Markdown files.
 
 ## Features
 
-- Create new Markdown files
-- Open existing files
-- Edit files in a text area
-- Preview rendered Markdown
-- Save files
-- Rename files
-- Delete files
-- Upload files
-- Word count
-- Last modified timestamp
+- **File Management:**
+    - Create new Markdown files.
+    - Open existing Markdown files.
+    - Rename files.
+    - Delete files.
+    - Upload files from your local machine.
+- **Editing:**
+    - A text area for editing Markdown content.
+    - A slider to adjust the text area height.
+- **Preview:**
+    - A preview pane that renders the Markdown content in real-time.
+    - A table of contents (TOC) for easy navigation within the document.
+- **Word Count:**
+    - Displays the word count of the current document.
+- **Last Modified:**
+    - Shows the last modified timestamp of the current file.
+
+## Usage
+
+1. **Run the app:**
+   - Make sure you have Streamlit installed (`pip install streamlit`).
+   - Run the script: `streamlit run markdown_editor.py`
+2. **Interact with the app:**
+   - Use the sidebar to create, open, rename, delete, or upload files.
+   - Edit the Markdown content in the "Edit" tab.
+   - View the rendered Markdown in the "Preview" tab.
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.7 or higher
 - Streamlit
 
 ## Installation
 
-1. Clone this repository or download the source code.
-2. Install the required packages:
+1. Install Python 3.7 or higher.
+2. Install Streamlit: `pip install streamlit`
 
-```
-pip install streamlit
-```
+## Running the App
 
-## Usage
-
-Run the Streamlit app with:
-
-```
-streamlit run app.py
-```
-
-Replace `app.py` with the name of the Python file containing the code.
-
-## How it works
-
-1. The app creates an `uploads` directory to store Markdown files.
-2. The sidebar provides options for file management:
-   - Create a new file
-   - Open an existing file
-   - Rename the current file
-   - Upload a file
-   - Delete the current file
-   - Save the current file
-3. The main area is split into two tabs:
-   - Edit: A text area for editing the Markdown content
-   - Preview: A rendered view of the Markdown content
-4. The app tracks the last modified time and word count for the current file.
-
-## File Management
-
-- **New File**: Enter a name and press Enter to create a new file.
-- **Open File**: Select a file from the dropdown to open it.
-- **Rename File**: Enter a new name and press Enter to rename the current file.
-- **Upload File**: Use the file uploader to upload a Markdown or text file.
-- **Delete File**: Click the "Delete File" button to remove the current file.
-- **Save File**: Click the "Save File" button to save changes to the current file.
+1. Save the code as `markdown_editor.py`.
+2. Open a terminal and navigate to the directory where you saved the file.
+3. Run the following command: `streamlit run markdown_editor.py`
 
 ## Notes
 
-- All files are saved with a `.md` extension.
-- The app uses UTF-8 encoding for file operations.
-- Error handling is implemented with toast notifications for user feedback.
+- The app stores uploaded and created files in a directory named "uploads" within the same directory as the script.
+- The app uses Streamlit's `st.cache_data` decorator to cache the TOC generation, improving performance.
+- The app uses HTML and CSS for styling the TOC and preview pane.
+
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 ## License
 
