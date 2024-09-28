@@ -1,6 +1,6 @@
 # Streamlit Markdown Editor
 
-This is a simple yet powerful Markdown editor built with Streamlit. It allows users to create, edit, save, and preview Markdown files directly in the browser.
+This is a simple Markdown editor built with Streamlit. It allows users to create, edit, save, and preview Markdown files directly in the browser.
 
 ## Features
 
@@ -19,7 +19,6 @@ This is a simple yet powerful Markdown editor built with Streamlit. It allows us
 
 - Python 3.6+
 - Streamlit
-- pytz
 
 ## Installation
 
@@ -27,7 +26,7 @@ This is a simple yet powerful Markdown editor built with Streamlit. It allows us
 2. Install the required packages:
 
 ```
-pip install streamlit pytz
+pip install streamlit
 ```
 
 ## Usage
