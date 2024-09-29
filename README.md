@@ -1,4 +1,3 @@
-```markdown
 # Markdown Editor
 
 This is a simple Markdown editor built with Streamlit. It allows you to create, edit, save, and export Markdown files to PDF.
