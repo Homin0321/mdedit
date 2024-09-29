@@ -1,62 +1,53 @@
+```markdown
 # Markdown Editor
 
-This Streamlit app provides a simple yet powerful Markdown editor for creating and managing Markdown files.
+This is a simple Markdown editor built with Streamlit. It allows you to create, edit, save, and export Markdown files to PDF.
 
 ## Features
 
-- **File Management:**
-    - Create new Markdown files.
-    - Open existing Markdown files.
-    - Rename files.
-    - Delete files.
-    - Upload files from your local machine.
-- **Editing:**
-    - A text area for editing Markdown content.
-    - A slider to adjust the text area height.
-- **Preview:**
-    - A preview pane that renders the Markdown content in real-time.
-    - A table of contents (TOC) for easy navigation within the document.
-- **Word Count:**
-    - Displays the word count of the current document.
-- **Last Modified:**
-    - Shows the last modified timestamp of the current file.
-
-## Usage
-
-1. **Run the app:**
-   - Make sure you have Streamlit installed (`pip install streamlit`).
-   - Run the script: `streamlit run markdown_editor.py`
-2. **Interact with the app:**
-   - Use the sidebar to create, open, rename, delete, or upload files.
-   - Edit the Markdown content in the "Edit" tab.
-   - View the rendered Markdown in the "Preview" tab.
-
-## Requirements
-
-- Python 3.7 or higher
-- Streamlit
+- **Create new Markdown files:** Easily create new files with a user-friendly interface.
+- **Open existing files:** Load and edit existing Markdown files from the `uploads` directory.
+- **Save files:** Save your changes to the `uploads` directory.
+- **Export to PDF:** Convert your Markdown files to PDF format for easy sharing and printing.
+- **Rename files:** Rename existing files.
+- **Delete files:** Delete files from the `uploads` directory.
+- **Upload files:** Upload Markdown files from your local machine.
+- **Find and Replace:** Use regular expressions to find and replace text within your Markdown files.
+- **Markdown Preview:** View a live preview of your Markdown content with support for images and a table of contents.
+- **Word and Line Count:** Get the word and line count of your Markdown file.
 
 ## Installation
 
-1. Install Python 3.7 or higher.
-2. Install Streamlit: `pip install streamlit`
+1. Install Streamlit:
+   ```bash
+   pip install streamlit
+   ```
 
-## Running the App
+2. Install the `md2pdf` library:
+   ```bash
+   pip install md2pdf
+   ```
 
-1. Save the code as `markdown_editor.py`.
-2. Open a terminal and navigate to the directory where you saved the file.
-3. Run the following command: `streamlit run markdown_editor.py`
+## Usage
 
-## Notes
+1. Run the app:
+   ```bash
+   streamlit run app.py
+   ```
 
-- The app stores uploaded and created files in a directory named "uploads" within the same directory as the script.
-- The app uses Streamlit's `st.cache_data` decorator to cache the TOC generation, improving performance.
-- The app uses HTML and CSS for styling the TOC and preview pane.
-
-## Contributing
-
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+2. Use the sidebar to create, open, save, export, rename, delete, and upload files.
+3. Edit your Markdown content in the "Edit" tab.
+4. Preview your Markdown content in the "Preview" tab.
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## Acknowledgements
+
+- [Streamlit](https://streamlit.io/)
+- [md2pdf](https://pypi.org/project/md2pdf/)
