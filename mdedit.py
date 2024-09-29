@@ -26,10 +26,6 @@ def load_file_content(selected_file):
         st.toast(f"Error reading file '{selected_file}': {e}", icon="🚫")
 
 def save_text_file():
-    if 'file_name' not in st.session_state or not st.session_state.file_name:
-        st.toast("Please provide a valid file name.", icon="⚠️")
-        return
-
     file_name = st.session_state.file_name if st.session_state.file_name.endswith('.md') else st.session_state.file_name + '.md'
     file_content = st.session_state.text
     try:
@@ -41,10 +37,6 @@ def save_text_file():
         st.toast(f"Error saving file '{file_name}': {e}", icon="🚫")
 
 def export_to_pdf():
-    if 'file_name' not in st.session_state or not st.session_state.file_name:
-        st.toast("Please provide a valid file name.", icon="⚠️")
-        return
-
     output_file = st.session_state.file_name + '.pdf'
     try:
         md2pdf(output_file, st.session_state.text)
@@ -222,14 +214,25 @@ def main():
         if st.session_state.file_name:
             st.text_input("Rename File:", st.session_state.file_name, key="rename_file", on_change=rename_file)
 
-        if st.button("Delete File", use_container_width=True):
-            delete_file()
+            if st.button("Delete File", use_container_width=True):
+                delete_file()
 
-        if st.button("Save File", use_container_width=True):
-            save_text_file()
+            if st.button("Save File", use_container_width=True):
+                save_text_file()
 
-        if st.button("Export to PDF", use_container_width=True):
-            export_to_pdf()
+            output_file = st.session_state.file_name if st.session_state.file_name.endswith('.md') else st.session_state.file_name + '.md'
+            try:
+                st.download_button(label="Download File",
+                    data=st.session_state.text,
+                    file_name=output_file,
+                    mime="text/markdown",
+                    use_container_width=True)
+                st.toast(f"File '{output_file}' saved successfully!", icon="✅")
+            except Exception as e:
+                st.toast(f"Error exporting file '{output_file}': {e}", icon="🚫")
+
+            if st.button("Export to PDF", use_container_width=True):
+                export_to_pdf()
 
         with st.expander("Upload File"):
             st.file_uploader(" ", type=["md", "txt"], key="upload_file", on_change=upload_file)
