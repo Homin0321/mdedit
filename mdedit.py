@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from md2pdf.core import md2pdf
 
 UPLOADS_DIR = "uploads"
 
@@ -38,6 +39,25 @@ def save_text_file():
         update_last_modified(file_name)
     except Exception as e:
         st.toast(f"Error saving file '{file_name}': {e}", icon="🚫")
+
+def export_to_pdf():
+    if 'file_name' not in st.session_state or not st.session_state.file_name:
+        st.toast("Please provide a valid file name.", icon="⚠️")
+        return
+
+    output_file = st.session_state.file_name + '.pdf'
+    try:
+        md2pdf(output_file, st.session_state.text)
+        with open(output_file, "rb") as file:
+            st.download_button(label="Download PDF",
+                data=file,
+                file_name=output_file,
+                mime="application/pdf",
+                use_container_width=True)
+        os.remove(output_file)
+        st.toast(f"File '{output_file}' saved successfully!", icon="✅")
+    except Exception as e:
+        st.toast(f"Error exporting file '{output_file}': {e}", icon="🚫")
 
 def create_new_file():
     new_file_name = st.session_state.new_file
@@ -111,7 +131,6 @@ def get_line_count(text):
     return text.count('\n') + 1
 
 def markdown_images(markdown):
-    # example image markdown:
     # ![Test image](images/test.png "Alternate text")
     images = re.findall(r'(!\[(?P<image_title>[^\]]+)\]\((?P<image_path>[^\)"\s]+)\s*([^\)]*)\))', markdown)
     return images
@@ -209,6 +228,9 @@ def main():
         if st.button("Save File", use_container_width=True):
             save_text_file()
 
+        if st.button("Export to PDF", use_container_width=True):
+            export_to_pdf()
+
         with st.expander("Upload File"):
             st.file_uploader(" ", type=["md", "txt"], key="upload_file", on_change=upload_file)
 
@@ -250,7 +272,6 @@ def main():
         with st.container(border=False, height=st.session_state.height):
             content = markdown_insert_images(content)
             st.markdown(content, unsafe_allow_html=True)
-
 
 if __name__ == "__main__":
     main()
