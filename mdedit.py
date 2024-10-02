@@ -156,7 +156,7 @@ def create_toc(text):
         toc += "<ul style='list-style-type: none; padding-left: 0;'>"
         for i, header in enumerate(headers):
             level = len(header[0])
-            title = html.escape(header[1])
+            title = remove_decorators(html.escape(header[1]))
             link = f"header-{i}"
             toc += f"<li style='margin-left: {(level-1)*20}px;'>"
             toc += f"<a href='#{link}' style='text-decoration: none; color: #333;'>"
@@ -192,6 +192,87 @@ def replace_all_matches(text, regex, replace):
         st.error("Invalid regular expression. Please check your input.")
         return text
 
+def split_by_regex(regex, text):
+    parts = []
+    current_part = ""
+    for line in text.splitlines():
+        if re.match(regex, line):
+            if current_part:
+                parts.append(current_part)
+                current_part = ""
+            current_part += line + "\n"
+        else:
+            current_part += line + "\n"
+    if current_part:
+        parts.append(current_part)
+    return parts
+
+@st.cache_data
+def split_content(text):
+    # Attempt to split by the primary separator "---"
+    pages = text.split("---\n")
+    if len(pages) > 1:
+        return pages
+
+    # Attempt to split by headings (e.g., "# Heading")
+    parts = split_by_regex(r'^(#+)\s+(.*)', text)
+    if len(parts) > 1:
+        return parts
+
+    # Attempt to split by "** ~ **\n"
+    parts = split_by_regex(r'^\*\*(.*?)\*\*$', text)
+    if len(parts) > 1:
+        return parts
+
+    # If no splitting occurred, return the original text as a single element list
+    return [text]
+
+def remove_decorators(text):
+    # Remove leading hashes
+    text = text.lstrip('#')
+
+    # Remove bold formatting
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+
+    # Remove trailing colon
+    if text.endswith(':'):
+        text = text[:-1]
+
+    return text
+
+def find_index(lst, target):
+    # Finds the index of a target item in a list
+    for i, str in enumerate(lst):
+        if str == target:
+            return i
+    return -1
+
+@st.dialog("Page Index", width="large")
+def show_index(toc):
+    idx = st.session_state.current_page
+    selected = st.radio("Contents:", toc, index=idx, label_visibility="collapsed")
+    if selected is not None:
+        idx = find_index(toc, selected)
+        if idx != -1 and st.session_state.current_page != idx:
+            st.session_state.current_page = idx
+            st.rerun()
+
+@st.cache_data
+def make_index(pages):
+    # Creates an index of page titles from the first line of each page
+    index = []
+    for i, page in enumerate(pages):
+        first_line = remove_decorators(page.strip().split('\n')[0])
+        #first_line = first_line[:30] + "..." if len(first_line) > 30 else first_line
+        first_line = f"{i+1}. {first_line}"
+        index.append(first_line)
+    return index
+
+def update_slider():
+    page = st.session_state.page_slider -1
+    if page != st.session_state.current_page:
+        st.session_state.current_page = page
+
 def main():
     st.set_page_config(layout="wide", page_title="Markdown Editor", page_icon="📝")
 
@@ -222,12 +303,12 @@ def main():
 
             output_file = st.session_state.file_name if st.session_state.file_name.endswith('.md') else st.session_state.file_name + '.md'
             try:
-                st.download_button(label="Download File",
+                if st.download_button(label="Download File",
                     data=st.session_state.text,
                     file_name=output_file,
                     mime="text/markdown",
-                    use_container_width=True)
-                st.toast(f"File '{output_file}' saved successfully!", icon="✅")
+                    use_container_width=True):
+                    st.toast(f"File '{output_file}' saved successfully!", icon="✅")
             except Exception as e:
                 st.toast(f"Error exporting file '{output_file}': {e}", icon="🚫")
 
@@ -243,7 +324,7 @@ def main():
             st.write(f"{get_word_count(st.session_state.text)} words, {get_line_count(st.session_state.text)} lines")
             st.session_state.height = st.slider("Text Box Height:", 100, 1000, 600, 100)
 
-    tab1, tab2 = st.tabs(["Edit", "Preview"])
+    tab1, tab2, tab3 = st.tabs(["Edit", "Preview", "Slide"])
 
     with tab1:
         col1, col2, col3, col4 = st.columns(4)
@@ -275,6 +356,48 @@ def main():
         with st.container(border=False, height=st.session_state.height):
             content = markdown_insert_images(content)
             st.markdown(content, unsafe_allow_html=True)
+
+    with tab3:
+        pages = split_content(st.session_state.text)
+        index = make_index(pages)
+
+        if "current_page" not in st.session_state:
+            st.session_state.current_page = 0
+
+        placeholder = st.empty()
+        st.divider()
+
+        col1, col2, col3, col4 = st.columns([1, 1, 9, 1])
+
+        with col1:
+            if st.button("◀", use_container_width=True):
+                if st.session_state.current_page == 0:
+                    st.session_state.current_page = len(pages)-1
+                else:
+                    st.session_state.current_page -= 1
+
+        with col2:
+            if st.button("Jump to", use_container_width=True):
+                show_index(index)
+
+        with col3:
+            slider = st.empty()
+
+        with col4:
+            if st.button("▶", use_container_width=True):
+                if st.session_state.current_page == len(pages)-1:
+                    st.session_state.current_page = 0
+                else:
+                    st.session_state.current_page += 1
+
+        if len(pages) > 1:
+            slider.slider("Go to", min_value=1, max_value=len(pages),
+                            value=st.session_state.current_page + 1,
+                            key="page_slider",
+                            on_change=update_slider,
+                            label_visibility="collapsed")
+
+        placeholder.markdown(pages[st.session_state.current_page], unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
