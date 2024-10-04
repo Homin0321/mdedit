@@ -25,13 +25,14 @@ def load_file_content(selected_file):
     except Exception as e:
         st.toast(f"Error reading file '{selected_file}': {e}", icon="🚫")
 
-def save_text_file():
+def save_text_file(silent_mode):
     file_name = st.session_state.file_name if st.session_state.file_name.endswith('.md') else st.session_state.file_name + '.md'
     file_content = st.session_state.text
     try:
         with open(os.path.join(UPLOADS_DIR, file_name), "w", encoding="utf-8") as f:
             f.write(file_content)
-        st.toast(f"File '{file_name}' saved successfully!", icon="✅")
+        if silent_mode is not True:
+            st.toast(f"File '{file_name}' saved successfully!", icon="✅")
         update_last_modified(file_name)
     except Exception as e:
         st.toast(f"Error saving file '{file_name}': {e}", icon="🚫")
@@ -39,7 +40,7 @@ def save_text_file():
 @st.fragment(run_every="60s")
 def auto_save():
     if st.session_state.file_name:
-        save_text_file()
+        save_text_file(silent_mode=True)
 
 def export_to_pdf():
     output_file = st.session_state.file_name + '.pdf'
@@ -66,7 +67,7 @@ def create_new_file():
             st.session_state.file_name = os.path.splitext(new_file_name)[0]
             st.session_state.text = ""
             st.session_state.new_file = ""
-            save_text_file()
+            save_text_file(silent_mode=True)
             st.toast(f"New file '{new_file_name}' created successfully!", icon="✅")
 
 def rename_file():
@@ -112,7 +113,7 @@ def upload_file():
         st.session_state.file_name = os.path.splitext(uploaded_file.name)[0]
         try:
             st.session_state.text = uploaded_file.read().decode("utf-8")
-            save_text_file()
+            save_text_file(silent_mode=True)
             st.toast(f"File '{uploaded_file.name}' uploaded successfully!", icon="✅")
         except Exception as e:
             st.toast(f"Error uploading file: {e}", icon="🚫")
@@ -304,7 +305,7 @@ def main():
                 delete_file()
 
             if st.button("Save File", use_container_width=True):
-                save_text_file()
+                save_text_file(silent_mode=False)
 
             output_file = st.session_state.file_name if st.session_state.file_name.endswith('.md') else st.session_state.file_name + '.md'
             try:
@@ -404,7 +405,7 @@ def main():
 
         placeholder.markdown(pages[st.session_state.current_page], unsafe_allow_html=True)
 
-    auto_save()
+    auto_save(silent_mode=True)
     
 if __name__ == "__main__":
     main()
