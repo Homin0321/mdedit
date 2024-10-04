@@ -36,6 +36,11 @@ def save_text_file():
     except Exception as e:
         st.toast(f"Error saving file '{file_name}': {e}", icon="🚫")
 
+@st.fragment(run_every="60s")
+def auto_save():
+    if st.session_state.file_name:
+        save_text_file()
+
 def export_to_pdf():
     output_file = st.session_state.file_name + '.pdf'
     try:
@@ -399,5 +404,7 @@ def main():
 
         placeholder.markdown(pages[st.session_state.current_page], unsafe_allow_html=True)
 
+    auto_save()
+    
 if __name__ == "__main__":
     main()
