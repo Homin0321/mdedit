@@ -405,7 +405,7 @@ def main():
 
         placeholder.markdown(pages[st.session_state.current_page], unsafe_allow_html=True)
 
-    auto_save(silent_mode=True)
+    auto_save()
     
 if __name__ == "__main__":
     main()
