@@ -68,6 +68,7 @@ def create_new_file():
             st.session_state.text = ""
             st.session_state.new_file = ""
             save_text_file(silent_mode=True)
+            resplit()
             st.toast(f"New file '{new_file_name}' created successfully!", icon="✅")
 
 def rename_file():
@@ -106,6 +107,7 @@ def open_file():
     if selected_file:
         load_file_content(selected_file)
         st.session_state.file_name = os.path.splitext(selected_file)[0]
+        resplit()
 
 def upload_file():
     uploaded_file = st.session_state.upload_file
@@ -114,6 +116,7 @@ def upload_file():
         try:
             st.session_state.text = uploaded_file.read().decode("utf-8")
             save_text_file(silent_mode=True)
+            resplit()
             st.toast(f"File '{uploaded_file.name}' uploaded successfully!", icon="✅")
         except Exception as e:
             st.toast(f"Error uploading file: {e}", icon="🚫")
@@ -214,24 +217,33 @@ def split_by_regex(regex, text):
     return parts
 
 @st.cache_data
-def split_content(text):
-    # Attempt to split by the primary separator "---"
-    pages = text.split("---\n")
-    if len(pages) > 1:
-        return pages
+def split_content():
+    text = st.session_state.text
 
-    # Attempt to split by headings (e.g., "# Heading")
-    parts = split_by_regex(r'^(#+)\s+(.*)', text)
+    match st.session_state.separator:
+        case "#":
+            parts = split_by_regex(r'^# .*$', text)
+        case "##":
+            parts = split_by_regex(r'^#{1,2} .*$', text)
+        case "###":
+            parts = split_by_regex(r'^#{1,3} .*$', text)
+        case "---":
+            parts = split_by_regex(r'\n---\n', text)
+        case "** ~ **":
+            parts = split_by_regex(r'^\*\*(.*?)\*\*$', text)
+        case _:
+            parts = split_by_regex(r'^#{1,2} .*$', text)
+
     if len(parts) > 1:
         return parts
+    else:
+        return [text]
 
-    # Attempt to split by "** ~ **\n"
-    parts = split_by_regex(r'^\*\*(.*?)\*\*$', text)
-    if len(parts) > 1:
-        return parts
-
-    # If no splitting occurred, return the original text as a single element list
-    return [text]
+def resplit():
+    # Clear the current page when changing separators
+    st.session_state.current_page = 0
+    # Clear the cached split content to force a recalculation
+    split_content.clear()
 
 def remove_decorators(text):
     # Remove leading hashes
@@ -285,6 +297,8 @@ def main():
     st.session_state.text = st.session_state.get("text", "")
     st.session_state.file_name = st.session_state.get("file_name", "")
     st.session_state.height = st.session_state.get("height", 600)
+    st.session_state.current_page = st.session_state.get("current_page", 0)
+    st.session_state.separator = st.session_state.get("separator", "##")
 
     with st.sidebar:
         if st.session_state.file_name:
@@ -364,16 +378,13 @@ def main():
             st.markdown(content, unsafe_allow_html=True)
 
     with tab3:
-        pages = split_content(st.session_state.text)
+        pages = split_content()
         index = make_index(pages)
-
-        if "current_page" not in st.session_state:
-            st.session_state.current_page = 0
 
         placeholder = st.empty()
         st.divider()
 
-        col1, col2, col3, col4 = st.columns([1, 1, 9, 1])
+        col1, col2, col3, col4, col5 = st.columns([1, 1, 9, 2, 1])
 
         with col1:
             if st.button("◀", use_container_width=True):
@@ -390,6 +401,16 @@ def main():
             slider = st.empty()
 
         with col4:
+            st.selectbox(
+                "Separator",
+                ("#", "##", "###", "---", "** ~ **"),
+                index=1,  # Set a default value
+                key="separator",
+                on_change=resplit,
+                label_visibility="collapsed"
+            )
+
+        with col5:
             if st.button("▶", use_container_width=True):
                 if st.session_state.current_page == len(pages)-1:
                     st.session_state.current_page = 0
