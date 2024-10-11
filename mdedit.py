@@ -214,12 +214,74 @@ def split_by_regex(regex, text):
             current_part += line + "\n"
     if current_part:
         parts.append(current_part)
+
+    return parts
+
+def is_markdown_heading(line):
+    # Check if line is a markdown heading (level 1, 2, or 3)
+    stripped_line = line.strip()
+    return (stripped_line.startswith('#') or 
+            stripped_line.startswith('##') or 
+            stripped_line.startswith('###'))
+
+def split_at_last_heading(text):
+    lines = text.splitlines()
+    last_heading_index = -1
+    
+    # Find the last heading in the text
+    for i, line in enumerate(lines):
+        if is_markdown_heading(line):
+            last_heading_index = i
+    
+    # If a heading was found and it's not the first line
+    if last_heading_index > 0:
+        part1 = '\n'.join(lines[:last_heading_index]) + '\n'
+        part2 = '\n'.join(lines[last_heading_index:]) + '\n'
+        return [part1, part2]
+    
+    return ['\n'.join(lines) + '\n']
+
+def split_by_lines(num, text):
+    parts = []
+    lines = text.splitlines()
+    
+    current_chunk = []
+    in_table = False
+    chunk_line_count = 0
+    
+    for line in lines:
+        # Check if line is part of a markdown table
+        if line.strip().startswith('|') or line.strip().startswith('+-'):
+            in_table = True
+        elif in_table and not line.strip():
+            in_table = False
+        
+        current_chunk.append(line)
+        chunk_line_count += 1
+        
+        # Only split when we're not in a table and have reached the line limit
+        if chunk_line_count >= num and not in_table:
+            chunk_text = '\n'.join(current_chunk) + '\n'
+            
+            # If the last line is a heading, split before it
+            if is_markdown_heading(current_chunk[-1]):
+                split_chunks = split_at_last_heading(chunk_text)
+                parts.extend(split_chunks[:-1])  # Add all but the last chunk
+                current_chunk = [split_chunks[-1].strip()]  # Start new chunk with the heading
+            else:
+                parts.append(chunk_text)
+                current_chunk = []
+                
+            chunk_line_count = len(current_chunk)
+    
+    # Add any remaining lines
+    if current_chunk:
+        parts.append('\n'.join(current_chunk) + '\n')
+    
     return parts
 
 @st.cache_data
-def split_content():
-    text = st.session_state.text
-
+def split_content(text):
     match st.session_state.separator:
         case "#":
             parts = split_by_regex(r'^# .*$', text)
@@ -231,8 +293,8 @@ def split_content():
             parts = split_by_regex(r'\n---\n', text)
         case "** ~ **":
             parts = split_by_regex(r'^\*\*(.*?)\*\*$', text)
-        case _:
-            parts = split_by_regex(r'^#{1,2} .*$', text)
+        case _: # Lines
+            parts = split_by_lines(st.session_state.page_lines, text)
 
     if len(parts) > 1:
         return parts
@@ -277,11 +339,9 @@ def show_index(toc):
 
 @st.cache_data
 def make_index(pages):
-    # Creates an index of page titles from the first line of each page
     index = []
     for i, page in enumerate(pages):
         first_line = remove_decorators(page.strip().split('\n')[0])
-        #first_line = first_line[:30] + "..." if len(first_line) > 30 else first_line
         first_line = f"{i+1}. {first_line}"
         index.append(first_line)
     return index
@@ -298,7 +358,8 @@ def main():
     st.session_state.file_name = st.session_state.get("file_name", "")
     st.session_state.height = st.session_state.get("height", 600)
     st.session_state.current_page = st.session_state.get("current_page", 0)
-    st.session_state.separator = st.session_state.get("separator", "##")
+    st.session_state.separator = st.session_state.get("separator", "Page length")
+    st.session_state.page_lines = st.session_state.get("page_lines", 15)
 
     with st.sidebar:
         if st.session_state.file_name:
@@ -378,13 +439,13 @@ def main():
             st.markdown(content, unsafe_allow_html=True)
 
     with tab3:
-        pages = split_content()
+        pages = split_content(st.session_state.text)
         index = make_index(pages)
 
         placeholder = st.empty()
         st.divider()
 
-        col1, col2, col3, col4, col5 = st.columns([1, 1, 9, 2, 1])
+        col1, col2, col3, col4, col5 = st.columns([1, 1, 9, 1, 1])
 
         with col1:
             if st.button("◀", use_container_width=True):
@@ -394,28 +455,32 @@ def main():
                     st.session_state.current_page -= 1
 
         with col2:
-            if st.button("Jump to", use_container_width=True):
-                show_index(index)
-
-        with col3:
-            slider = st.empty()
-
-        with col4:
-            st.selectbox(
-                "Separator",
-                ("#", "##", "###", "---", "** ~ **"),
-                index=1,  # Set a default value
-                key="separator",
-                on_change=resplit,
-                label_visibility="collapsed"
-            )
-
-        with col5:
             if st.button("▶", use_container_width=True):
                 if st.session_state.current_page == len(pages)-1:
                     st.session_state.current_page = 0
                 else:
                     st.session_state.current_page += 1
+
+        with col3:
+            slider = st.empty()
+
+        with col4:
+            if st.button("Jump to", use_container_width=True):
+                show_index(index)
+
+        with col5:
+            with st.popover("Split by"):
+                st.selectbox(
+                    "Separator",
+                    ("Page length", "#", "##", "###", "---", "** ~ **"),
+                    key="separator",
+                    on_change=resplit,
+                    label_visibility="collapsed"
+                )
+                st.slider("Select page length", min_value=1, max_value=30,
+                                value=15,
+                                key="page_lines",
+                                on_change=resplit)
 
         if len(pages) > 1:
             slider.slider("Go to", min_value=1, max_value=len(pages),

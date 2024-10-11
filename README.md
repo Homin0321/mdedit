@@ -1,52 +1,93 @@
 # Markdown Editor
 
-This is a simple Markdown editor built with Streamlit. It allows you to create, edit, save, and export Markdown files to PDF.
+A feature-rich Streamlit web application for creating, editing, and managing Markdown documents with advanced features like live preview, table of contents generation, and presentation mode.
 
 ## Features
 
-- **Create new Markdown files:** Easily create new files with a user-friendly interface.
-- **Open existing files:** Load and edit existing Markdown files from the `uploads` directory.
-- **Save files:** Save your changes to the `uploads` directory.
-- **Export to PDF:** Convert your Markdown files to PDF format for easy sharing and printing.
-- **Rename files:** Rename existing files.
-- **Delete files:** Delete files from the `uploads` directory.
-- **Upload files:** Upload Markdown files from your local machine.
-- **Find and Replace:** Use regular expressions to find and replace text within your Markdown files.
-- **Markdown Preview:** View a live preview of your Markdown content with support for images and a table of contents.
-- **Word and Line Count:** Get the word and line count of your Markdown file.
+- **File Management**
+  - Create, open, rename, and delete Markdown files
+  - Upload and download Markdown files
+  - Export to PDF
+  - Auto-save functionality
 
-## Installation
+- **Editor**
+  - Regular expression search and replace
+  - Adjustable editor height
+  - Word and line count
+  - Image embedding support
 
-1. Install Streamlit:
-   ```bash
-   pip install streamlit
-   ```
+- **Preview**
+  - Live Markdown rendering
+  - Automatic table of contents generation
+  - Support for embedded images
 
-2. Install the `md2pdf` library:
-   ```bash
-   pip install md2pdf
-   ```
+- **Presentation Mode**
+  - Split content into slides based on various separators:
+    - Page length
+    - Markdown headings (# / ## / ###)
+    - Horizontal rules (---)
+    - Bold text markers (** ~ **)
+  - Navigation controls
+  - Slide index for quick jumping
+
+## Requirements
+
+```
+streamlit
+md2pdf
+```
 
 ## Usage
 
-1. Run the app:
-   ```bash
+1. Run the application:
+   ```
    streamlit run app.py
    ```
 
-2. Use the sidebar to create, open, save, export, rename, delete, and upload files.
-3. Edit your Markdown content in the "Edit" tab.
-4. Preview your Markdown content in the "Preview" tab.
+2. The interface is divided into three main tabs:
+   - **Edit**: Text editor with search and replace functionality
+   - **Preview**: Live rendering of Markdown content with table of contents
+   - **Slide**: Presentation mode for viewing content as slides
+
+3. Use the sidebar for file management:
+   - Create new files
+   - Open existing files
+   - Rename or delete current file
+   - Download Markdown or export to PDF
+   - Upload files
+   - Adjust editor height
+
+## File Structure
+
+The application creates an `uploads` directory to store Markdown files. All files are saved with `.md` extension.
+
+## Key Functions
+
+### Content Splitting
+- `split_by_regex(regex, text)`: Splits content based on regular expressions
+- `split_by_lines(num, text)`: Splits content by number of lines
+- `is_markdown_heading(line)`: Checks if a line is a Markdown heading
+
+### Content Processing
+- `create_toc(text)`: Generates a table of contents
+- `markdown_insert_images(markdown)`: Processes and embeds images
+- `remove_decorators(text)`: Cleans text for index display
+
+### File Operations
+- `save_text_file(silent_mode)`: Saves the current content
+- `load_file_content(selected_file)`: Loads content from a file
+- `export_to_pdf()`: Exports the current content to PDF
+
+## Notes
+
+- The application automatically saves content every 60 seconds
+- Images are embedded directly in the Markdown preview
+- The presentation mode remembers the current page between tab switches
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!
 
 ## License
 
 This project is licensed under the MIT License
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-## Acknowledgements
-
-- [Streamlit](https://streamlit.io/)
-- [md2pdf](https://pypi.org/project/md2pdf/)
