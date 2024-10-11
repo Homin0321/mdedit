@@ -247,9 +247,14 @@ def split_by_lines(num, text):
     
     current_chunk = []
     in_table = False
+    in_code_block = False
     chunk_line_count = 0
     
     for line in lines:
+        # Check if line starts or ends a code block
+        if line.strip().startswith('```'):
+            in_code_block = not in_code_block
+        
         # Check if line is part of a markdown table
         if line.strip().startswith('|') or line.strip().startswith('+-'):
             in_table = True
@@ -259,8 +264,8 @@ def split_by_lines(num, text):
         current_chunk.append(line)
         chunk_line_count += 1
         
-        # Only split when we're not in a table and have reached the line limit
-        if chunk_line_count >= num and not in_table:
+        # Only split when we're not in a table or code block and have reached the line limit
+        if chunk_line_count >= num and not in_table and not in_code_block:
             chunk_text = '\n'.join(current_chunk) + '\n'
             
             # If the last line is a heading, split before it
