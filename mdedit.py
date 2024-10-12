@@ -204,18 +204,110 @@ def replace_all_matches(text, regex, replace):
 def split_by_regex(regex, text):
     parts = []
     current_part = ""
+    in_code_block = False
+    in_table = False
+    table_content = ""
+    
     for line in text.splitlines():
-        if re.match(regex, line):
+        # Check for code block
+        if line.strip().startswith('```'):
+            in_code_block = not in_code_block
+        
+        # Check for table
+        if line.strip().startswith('|') or line.strip().startswith('+-'):
+            if not in_table:
+                in_table = True
+            table_content += line + "\n"
+        elif in_table and not line.strip():
+            in_table = False
+            current_part += table_content
+            table_content = ""
+        
+        # Handle splitting
+        if re.match(regex, line) and not in_code_block and not in_table:
             if current_part:
                 parts.append(current_part)
                 current_part = ""
             current_part += line + "\n"
         else:
             current_part += line + "\n"
+    
+    # Add any remaining content
     if current_part:
         parts.append(current_part)
-
+    
     return parts
+
+def split_by_lines(num, text):
+    parts = []
+    lines = text.splitlines()
+    
+    current_chunk = []
+    in_table = False
+    in_code_block = False
+    chunk_line_count = 0
+    
+    for line in lines:
+        # Check if line starts or ends a code block
+        if line.strip().startswith('```'):
+            in_code_block = not in_code_block
+        
+        # Check if line is part of a markdown table
+        if line.strip().startswith('|') or line.strip().startswith('+-'):
+            in_table = True
+        elif in_table and not line.strip():
+            in_table = False
+        
+        current_chunk.append(line)
+        chunk_line_count += 1
+        
+        # Only split when we're not in a table or code block and have reached the line limit
+        if chunk_line_count >= num and not in_table and not in_code_block:
+            chunk_text = '\n'.join(current_chunk) + '\n'
+            
+            # If the last line is a heading, split before it
+            if is_markdown_heading(current_chunk[-1]):
+                split_chunks = split_at_last_heading(chunk_text)
+                parts.extend(split_chunks[:-1])  # Add all but the last chunk
+                current_chunk = [split_chunks[-1].strip()]  # Start new chunk with the heading
+            else:
+                parts.append(chunk_text)
+                current_chunk = []
+            
+            chunk_line_count = len(current_chunk)
+    
+    # Add any remaining lines
+    if current_chunk:
+        parts.append('\n'.join(current_chunk) + '\n')
+    
+    return parts
+
+@st.cache_data
+def split_content(text):
+    parts = [text]
+    
+    if st.session_state.separator_page_length:
+        parts = split_by_lines(st.session_state.page_lines, text)
+    
+    if st.session_state.separator_hr:
+        parts = [part for page in parts for part in split_by_regex(r'\n---\n', page)]
+    
+    if st.session_state.separator_h1:
+        parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
+    
+    if st.session_state.separator_h2:
+        parts = [part for page in parts for part in split_by_regex(r'^## .*$', page)]
+    
+    if st.session_state.separator_h3:
+        parts = [part for page in parts for part in split_by_regex(r'^### .*$', page)]
+    
+    if st.session_state.separator_bold:
+        parts = [part for page in parts for part in split_by_regex(r'^\*\*(.*?)\*\*$', page)]
+    
+    if len(parts) > 1:
+        return parts
+    else:
+        return [text]
 
 def is_markdown_heading(line):
     # Check if line is a markdown heading (level 1, 2, or 3)
