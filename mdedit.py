@@ -287,20 +287,26 @@ def split_by_lines(num, text):
 
 @st.cache_data
 def split_content(text):
-    match st.session_state.separator:
-        case "#":
-            parts = split_by_regex(r'^# .*$', text)
-        case "##":
-            parts = split_by_regex(r'^#{1,2} .*$', text)
-        case "###":
-            parts = split_by_regex(r'^#{1,3} .*$', text)
-        case "---":
-            parts = split_by_regex(r'\n---\n', text)
-        case "** ~ **":
-            parts = split_by_regex(r'^\*\*(.*?)\*\*$', text)
-        case _: # Lines
-            parts = split_by_lines(st.session_state.page_lines, text)
-
+    parts = [text]
+    
+    if st.session_state.separator_page_length:
+        parts = split_by_lines(st.session_state.page_lines, text)
+    
+    if st.session_state.separator_hr:
+        parts = [part for page in parts for part in split_by_regex(r'\n---\n', page)]
+    
+    if st.session_state.separator_h1:
+        parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
+    
+    if st.session_state.separator_h2:
+        parts = [part for page in parts for part in split_by_regex(r'^## .*$', page)]
+    
+    if st.session_state.separator_h3:
+        parts = [part for page in parts for part in split_by_regex(r'^### .*$', page)]
+    
+    if st.session_state.separator_bold:
+        parts = [part for page in parts for part in split_by_regex(r'^\*\*(.*?)\*\*$', page)]
+    
     if len(parts) > 1:
         return parts
     else:
@@ -364,7 +370,14 @@ def main():
     st.session_state.height = st.session_state.get("height", 600)
     st.session_state.current_page = st.session_state.get("current_page", 0)
     st.session_state.separator = st.session_state.get("separator", "Page length")
-    st.session_state.page_lines = st.session_state.get("page_lines", 15)
+    st.session_state.page_lines = st.session_state.get("page_lines", 20)
+
+    st.session_state.separator_hr = st.session_state.get("separator_hr", True)
+    st.session_state.separator_h1 = st.session_state.get("separator_h1", True)
+    st.session_state.separator_h2 = st.session_state.get("separator_h2", True)
+    st.session_state.separator_h3 = st.session_state.get("separator_h3", False)
+    st.session_state.separator_bold = st.session_state.get("separator_bold", False)
+    st.session_state.separator_page_length = st.session_state.get("separator_page_length", False)
 
     with st.sidebar:
         if st.session_state.file_name:
@@ -475,17 +488,16 @@ def main():
 
         with col5:
             with st.popover("Split by"):
-                st.selectbox(
-                    "Separator",
-                    ("Page length", "#", "##", "###", "---", "** ~ **"),
-                    key="separator",
-                    on_change=resplit,
-                    label_visibility="collapsed"
-                )
+                st.checkbox("\---", key="separator_hr", on_change=resplit)
+                st.checkbox("\#", key="separator_h1", on_change=resplit)
+                st.checkbox("\##", key="separator_h2", on_change=resplit)
+                st.checkbox("\###", key="separator_h3", on_change=resplit)
+                st.checkbox("\** ~ **", key="separator_bold", on_change=resplit)
+                st.checkbox("Page length", key="separator_page_length", on_change=resplit)
                 st.slider("Select page length", min_value=1, max_value=30,
-                                value=15,
-                                key="page_lines",
-                                on_change=resplit)
+                            value=20,
+                            key="page_lines",
+                            on_change=resplit)
 
         if len(pages) > 1:
             slider.slider("Go to", min_value=1, max_value=len(pages),
