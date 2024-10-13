@@ -481,7 +481,7 @@ def main():
 
         files = get_files_list()
         if files:
-            st.selectbox("Open File:", files, index=None, key="open_file", on_change=open_file)
+            st.selectbox("Open File:", files, placeholder="Choose a file", index=None, key="open_file", on_change=open_file)
 
         if st.session_state.file_name:
             st.text_input("Rename File:", st.session_state.file_name, key="rename_file", on_change=rename_file)
