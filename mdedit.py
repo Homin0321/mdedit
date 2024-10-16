@@ -290,7 +290,7 @@ def split_content(text):
         parts = split_by_lines(st.session_state.page_lines, text)
     
     if st.session_state.separator_hr:
-        parts = [part for page in parts for part in split_by_regex(r'\n---\n', page)]
+        parts = [part for page in parts for part in split_by_regex(r'---\s*$', page)]
     
     if st.session_state.separator_h1:
         parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
@@ -300,6 +300,9 @@ def split_content(text):
     
     if st.session_state.separator_h3:
         parts = [part for page in parts for part in split_by_regex(r'^### .*$', page)]
+    
+    if st.session_state.separator_h4:
+        parts = [part for page in parts for part in split_by_regex(r'^#### .*$', page)]
     
     if st.session_state.separator_bold:
         parts = [part for page in parts for part in split_by_regex(r'^\*\*(.*?)\*\*$', page)]
@@ -314,7 +317,8 @@ def is_markdown_heading(line):
     stripped_line = line.strip()
     return (stripped_line.startswith('#') or 
             stripped_line.startswith('##') or 
-            stripped_line.startswith('###'))
+            stripped_line.startswith('###') or 
+            stripped_line.startswith('####'))
 
 def split_at_last_heading(text):
     lines = text.splitlines()
@@ -332,77 +336,6 @@ def split_at_last_heading(text):
         return [part1, part2]
     
     return ['\n'.join(lines) + '\n']
-
-def split_by_lines(num, text):
-    parts = []
-    lines = text.splitlines()
-    
-    current_chunk = []
-    in_table = False
-    in_code_block = False
-    chunk_line_count = 0
-    
-    for line in lines:
-        # Check if line starts or ends a code block
-        if line.strip().startswith('```'):
-            in_code_block = not in_code_block
-        
-        # Check if line is part of a markdown table
-        if line.strip().startswith('|') or line.strip().startswith('+-'):
-            in_table = True
-        elif in_table and not line.strip():
-            in_table = False
-        
-        current_chunk.append(line)
-        chunk_line_count += 1
-        
-        # Only split when we're not in a table or code block and have reached the line limit
-        if chunk_line_count >= num and not in_table and not in_code_block:
-            chunk_text = '\n'.join(current_chunk) + '\n'
-            
-            # If the last line is a heading, split before it
-            if is_markdown_heading(current_chunk[-1]):
-                split_chunks = split_at_last_heading(chunk_text)
-                parts.extend(split_chunks[:-1])  # Add all but the last chunk
-                current_chunk = [split_chunks[-1].strip()]  # Start new chunk with the heading
-            else:
-                parts.append(chunk_text)
-                current_chunk = []
-                
-            chunk_line_count = len(current_chunk)
-    
-    # Add any remaining lines
-    if current_chunk:
-        parts.append('\n'.join(current_chunk) + '\n')
-    
-    return parts
-
-@st.cache_data
-def split_content(text):
-    parts = [text]
-    
-    if st.session_state.separator_page_length:
-        parts = split_by_lines(st.session_state.page_lines, text)
-    
-    if st.session_state.separator_hr:
-        parts = [part for page in parts for part in split_by_regex(r'\n---\n', page)]
-    
-    if st.session_state.separator_h1:
-        parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
-    
-    if st.session_state.separator_h2:
-        parts = [part for page in parts for part in split_by_regex(r'^## .*$', page)]
-    
-    if st.session_state.separator_h3:
-        parts = [part for page in parts for part in split_by_regex(r'^### .*$', page)]
-    
-    if st.session_state.separator_bold:
-        parts = [part for page in parts for part in split_by_regex(r'^\*\*(.*?)\*\*$', page)]
-    
-    if len(parts) > 1:
-        return parts
-    else:
-        return [text]
 
 def resplit():
     # Clear the current page when changing separators
@@ -468,6 +401,7 @@ def main():
     st.session_state.separator_h1 = st.session_state.get("separator_h1", True)
     st.session_state.separator_h2 = st.session_state.get("separator_h2", True)
     st.session_state.separator_h3 = st.session_state.get("separator_h3", False)
+    st.session_state.separator_h4 = st.session_state.get("separator_h4", False)
     st.session_state.separator_bold = st.session_state.get("separator_bold", False)
     st.session_state.separator_page_length = st.session_state.get("separator_page_length", False)
 
@@ -481,7 +415,7 @@ def main():
 
         files = get_files_list()
         if files:
-            st.selectbox("Open File:", files, placeholder="Choose a file", index=None, key="open_file", on_change=open_file)
+            st.selectbox("Open File:", files, index=None, key="open_file", on_change=open_file)
 
         if st.session_state.file_name:
             st.text_input("Rename File:", st.session_state.file_name, key="rename_file", on_change=rename_file)
@@ -584,6 +518,7 @@ def main():
                 st.checkbox("\#", key="separator_h1", on_change=resplit)
                 st.checkbox("\##", key="separator_h2", on_change=resplit)
                 st.checkbox("\###", key="separator_h3", on_change=resplit)
+                st.checkbox("\####", key="separator_h4", on_change=resplit)
                 st.checkbox("\** ~ **", key="separator_bold", on_change=resplit)
                 st.checkbox("Page length", key="separator_page_length", on_change=resplit)
                 st.slider("Select page length", min_value=1, max_value=30,
