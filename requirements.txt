@@ -1,3 +1,4 @@
+google.generativeai
 md2pdf
 weasyprint
 pango
