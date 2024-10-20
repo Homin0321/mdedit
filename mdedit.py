@@ -11,7 +11,6 @@ import google.generativeai as genai
 UPLOADS_DIR = "uploads"
 
 TEMPERATURE = 0.5
-PASSWORD = st.secrets["passwd"]  # Store password securely in secrets
 API_KEY = st.secrets["api_key"]  # Store API key securely in secrets
 
 # Ensure the upload directory exists
