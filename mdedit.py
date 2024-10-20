@@ -579,11 +579,11 @@ def main():
             slider = st.empty()
 
         with col4:
-            if st.button("Jump to", use_container_width=True):
+            if st.button("Jump", use_container_width=True):
                 show_index(index)
 
         with col5:
-            with st.popover("Split by"):
+            with st.popover("Split"):
                 st.checkbox(r"\---", key="separator_hr", on_change=resplit)
                 st.checkbox(r"\#", key="separator_h1", on_change=resplit)
                 st.checkbox(r"\##", key="separator_h2", on_change=resplit)
