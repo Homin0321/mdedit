@@ -1,93 +1,102 @@
-# Markdown Editor
+# Streamlit Markdown Editor
 
-A feature-rich Streamlit web application for creating, editing, and managing Markdown documents with advanced features like live preview, table of contents generation, and presentation mode.
+A powerful and feature-rich Markdown editor built with Streamlit and enhanced with AI capabilities using Google's Generative AI.
 
 ## Features
 
-- **File Management**
-  - Create, open, rename, and delete Markdown files
-  - Upload and download Markdown files
-  - Export to PDF
-  - Auto-save functionality
-
-- **Editor**
-  - Regular expression search and replace
-  - Adjustable editor height
-  - Word and line count
-  - Image embedding support
-
-- **Preview**
-  - Live Markdown rendering
-  - Automatic table of contents generation
-  - Support for embedded images
-
-- **Presentation Mode**
-  - Split content into slides based on various separators:
-    - Page length
-    - Markdown headings (# / ## / ###)
-    - Horizontal rules (---)
-    - Bold text markers (** ~ **)
-  - Navigation controls
-  - Slide index for quick jumping
+- Create, edit, and manage Markdown files
+- Real-time preview with table of contents
+- File management (create, rename, delete, upload, download)
+- Export to PDF
+- AI-powered text operations (correction, composition, summarization, translation, etc.)
+- Regular expression search and replace
+- Slide view with customizable page splitting
+- Auto-save functionality
 
 ## Requirements
 
-```
-streamlit
-md2pdf
-```
+- Python 3.7+
+- Streamlit
+- google-generativeai
+- md2pdf
+
+## Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/yourusername/streamlit-markdown-editor.git
+   cd streamlit-markdown-editor
+   ```
+
+2. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Set up your environment variables:
+   - Create a `.streamlit/secrets.toml` file in the project directory
+   - Add your Google AI API key and password:
+     ```
+     api_key = "your_google_ai_api_key"
+     passwd = "your_password"
+     ```
 
 ## Usage
 
-1. Run the application:
-   ```
-   streamlit run app.py
-   ```
+Run the Streamlit app:
 
-2. The interface is divided into three main tabs:
-   - **Edit**: Text editor with search and replace functionality
-   - **Preview**: Live rendering of Markdown content with table of contents
-   - **Slide**: Presentation mode for viewing content as slides
+```
+streamlit run app.py
+```
 
-3. Use the sidebar for file management:
-   - Create new files
-   - Open existing files
-   - Rename or delete current file
-   - Download Markdown or export to PDF
-   - Upload files
-   - Adjust editor height
+Navigate to the provided URL in your web browser to use the Markdown editor.
 
-## File Structure
+## Main Components
 
-The application creates an `uploads` directory to store Markdown files. All files are saved with `.md` extension.
+1. **Edit Tab**: Write and edit your Markdown content with regex search and replace functionality.
+2. **Wizard Tab**: Utilize AI-powered text operations to enhance your content.
+3. **Preview Tab**: View the rendered Markdown with an auto-generated table of contents.
+4. **Slide Tab**: Navigate through your content in a slide-like view with customizable page splitting.
 
-## Key Functions
+## File Management
 
-### Content Splitting
-- `split_by_regex(regex, text)`: Splits content based on regular expressions
-- `split_by_lines(num, text)`: Splits content by number of lines
-- `is_markdown_heading(line)`: Checks if a line is a Markdown heading
+- Create new files
+- Open existing files
+- Rename files
+- Delete files
+- Upload files
+- Download files
+- Export to PDF
 
-### Content Processing
-- `create_toc(text)`: Generates a table of contents
-- `markdown_insert_images(markdown)`: Processes and embeds images
-- `remove_decorators(text)`: Cleans text for index display
+## AI Features
 
-### File Operations
-- `save_text_file(silent_mode)`: Saves the current content
-- `load_file_content(selected_file)`: Loads content from a file
-- `export_to_pdf()`: Exports the current content to PDF
+Powered by Google's Generative AI, the editor offers various text operations:
+
+- Grammar and spelling correction
+- Text composition
+- Summarization
+- Key points extraction
+- Translation (Korean and English)
+- Markdown formatting
+
+## Customization
+
+- Adjust the text box height
+- Customize page splitting in the Slide view
+
+## Auto-save
+
+The editor automatically saves your work every 60 seconds.
 
 ## Notes
 
-- The application automatically saves content every 60 seconds
-- Images are embedded directly in the Markdown preview
-- The presentation mode remembers the current page between tab switches
+- Ensure you have the necessary permissions to read and write files in the `uploads` directory.
+- The AI features require a valid Google AI API key.
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests!
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License
+[MIT License](LICENSE)

@@ -6,12 +6,32 @@ import re
 from datetime import datetime
 from pathlib import Path
 from md2pdf.core import md2pdf
+import google.generativeai as genai
 
 UPLOADS_DIR = "uploads"
+
+TEMPERATURE = 0.5
+PASSWORD = st.secrets["passwd"]  # Store password securely in secrets
+API_KEY = st.secrets["api_key"]  # Store API key securely in secrets
 
 # Ensure the upload directory exists
 if not os.path.exists(UPLOADS_DIR):
     os.makedirs(UPLOADS_DIR)
+
+# Configure Gemini only once
+@st.cache_resource 
+def configure_genai():
+    genai.configure(api_key=API_KEY)
+    return genai.GenerativeModel(
+        "gemini-1.5-flash-latest",
+        generation_config=genai.types.GenerationConfig(temperature=TEMPERATURE),
+        safety_settings=[
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ],
+    )
 
 def get_files_list():
     return sorted([f for f in os.listdir(UPLOADS_DIR) if os.path.isfile(os.path.join(UPLOADS_DIR, f))])
@@ -156,6 +176,23 @@ def markdown_insert_images(markdown):
         if os.path.exists(image_path):
             markdown = markdown.replace(image_markdown, img_to_html(image_path, image_alt))
     return markdown
+
+def ask_magic(model, prompt):
+    prompt = f'{prompt}: {st.session_state.text}'
+    response = model.generate_content(prompt)
+    return response.text
+
+def get_command(selected_prompt, language, text=""):
+    commands = {
+        "Prompt": text,
+        "Correct": f"Correct any grammatical or spelling errors in the following text:\n\n{text}",
+        "Compose": f"Write a structured piece based on the following content in {language}:\n\n{text}",
+        "Summarize": f"Summarize the following text in {language}:\n\n{text}",
+        "Extract Key Points": f"Extract and list the key points from the following text in {language}:\n\n{text}",
+        "Format in Markdown": f"Convert the following text to properly formatted Markdown:\n\n{text}",
+        "Translate to": f"Translate the following text to {language}:\n\n{text}",
+    }
+    return commands.get(selected_prompt, text)
 
 @st.cache_data
 def create_toc(text):
@@ -405,6 +442,8 @@ def main():
     st.session_state.separator_bold = st.session_state.get("separator_bold", False)
     st.session_state.separator_page_length = st.session_state.get("separator_page_length", False)
 
+    st.session_state.prompt = st.session_state.get("prompt", "")
+
     with st.sidebar:
         if st.session_state.file_name:
             st.subheader(st.session_state.file_name + '.md')
@@ -449,7 +488,7 @@ def main():
             st.write(f"{get_word_count(st.session_state.text)} words, {get_line_count(st.session_state.text)} lines")
             st.session_state.height = st.slider("Text Box Height:", 100, 1000, 600, 100)
 
-    tab1, tab2, tab3 = st.tabs(["Edit", "Preview", "Slide"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Edit", "Wizard", "Preview", "Slide"])
 
     with tab1:
         col1, col2, col3, col4 = st.columns(4)
@@ -473,6 +512,37 @@ def main():
         st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
 
     with tab2:
+        model = configure_genai()
+        prompts = (
+            "Prompt",
+            "Correct",
+            "Compose",
+            "Summarize",
+            "Extract Key Points",
+            "Translate to Korean",
+            "Translate to English",
+            "Format in Markdown",
+            )
+        result = ''
+        col1, col2, col3, col4 = st.columns([2, 2, 9, 2])
+        with col1:
+            selected_prompt = st.selectbox("Prompt:", prompts, label_visibility="collapsed")
+        with col2:
+            language = st.selectbox("Language:", ("Korean", "English"), label_visibility="collapsed")
+        with col3:
+            st.session_state.prompt = get_command(selected_prompt, language)
+            prompt = st.text_input("Input:", value=st.session_state.prompt, label_visibility="collapsed")
+        with col4:
+            if st.button("Go", use_container_width=True):
+                result = ask_magic(model, prompt)
+
+        st.write(result)
+
+        if result:
+            with st.popover("View the Markdown source"):
+                st.code(result, language="markdown")
+
+    with tab3:
         toc, content = create_toc(st.session_state.text)
         if toc:
             with st.popover("Table of Contents"):
@@ -482,7 +552,7 @@ def main():
             content = markdown_insert_images(content)
             st.markdown(content, unsafe_allow_html=True)
 
-    with tab3:
+    with tab4:
         pages = split_content(st.session_state.text)
         index = make_index(pages)
 
