@@ -584,12 +584,12 @@ def main():
 
         with col5:
             with st.popover("Split by"):
-                st.checkbox("\---", key="separator_hr", on_change=resplit)
-                st.checkbox("\#", key="separator_h1", on_change=resplit)
-                st.checkbox("\##", key="separator_h2", on_change=resplit)
-                st.checkbox("\###", key="separator_h3", on_change=resplit)
-                st.checkbox("\####", key="separator_h4", on_change=resplit)
-                st.checkbox("\** ~ **", key="separator_bold", on_change=resplit)
+                st.checkbox(r"\---", key="separator_hr", on_change=resplit)
+                st.checkbox(r"\#", key="separator_h1", on_change=resplit)
+                st.checkbox(r"\##", key="separator_h2", on_change=resplit)
+                st.checkbox(r"\###", key="separator_h3", on_change=resplit)
+                st.checkbox(r"\####", key="separator_h4", on_change=resplit)
+                st.checkbox(r"\** ~ **", key="separator_bold", on_change=resplit)
                 st.checkbox("Page length", key="separator_page_length", on_change=resplit)
                 st.slider("Select page length", min_value=1, max_value=30,
                             value=20,
