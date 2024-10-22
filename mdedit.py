@@ -571,7 +571,7 @@ def main():
         placeholder = st.empty()
         st.divider()
 
-        col1, col2, col3, col4, col5 = st.columns([1, 1, 9, 1, 1])
+        col1, col2, col3, col4, col5 = st.columns([1, 1, 8, 1, 1])
 
         with col1:
             if st.button("◀", use_container_width=True):
