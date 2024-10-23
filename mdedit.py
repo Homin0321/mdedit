@@ -185,7 +185,7 @@ def get_command(selected_prompt, language, text=""):
     commands = {
         "Prompt": text,
         "Rewrite": f"Rewrite the following text in a more understandable way, using {language}:\n\n{text}",
-        "Correct": f"Correct any grammatical or spelling errors in the following text:\n\n{text}",
+        "Correct": f"Correct any grammatical or spelling errors in the following text, using {language}:\n\n{text}",
         "Compose": f"Write a structured piece based on the following content in {language}:\n\n{text}",
         "Explain": f"Explain the following content in detail, in {language}:\n\n{text}",
         "Summarize": f"Summarize the following text in {language}:\n\n{text}",
@@ -193,8 +193,8 @@ def get_command(selected_prompt, language, text=""):
         "Extract Key Points": f"Extract and list the key points from the following text in {language}:\n\n{text}",
         "Format as Bullet Points": f"Convert the following text into a clear, bulleted list in {language}:\n\n{text}",
         "Write Professional Email": f"Write a professional email in {language} based on the following details:\n\n{text}",
-        "Create Report Outline": f"Create an outline for a report based on the following content:\n\n{text}",
-        "Prepare Presentation": f"Create a presentation outline based on the following text:\n\n{text}",
+        "Create Report Outline": f"Create an outline for a report based on the following content, using {language}:\n\n{text}",
+        "Prepare Presentation": f"Create a presentation outline based on the following text, using {language}:\n\n{text}",
         "Generate Project Proposal": f"Generate a project proposal based on the following information in {language}:\n\n{text}",
         "Format in Markdown": f"Convert the following text to properly formatted Markdown:\n\n{text}",
     }
