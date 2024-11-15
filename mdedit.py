@@ -430,6 +430,10 @@ def update_slider():
     if page != st.session_state.current_page:
         st.session_state.current_page = page
 
+def reset_session_state():
+    for key in st.session_state.keys():
+        del st.session_state[key]
+
 def main():
     st.set_page_config(layout="wide", page_title="Markdown Editor", page_icon="📝")
 
@@ -455,6 +459,10 @@ def main():
             st.subheader(st.session_state.file_name + '.md')
         else:
             st.subheader("No File Selected")
+
+        if st.button("Clear Session", use_container_width=True):
+            reset_session_state()
+            st.rerun()
 
         st.text_input("New File:", key="new_file", on_change=create_new_file, placeholder="Enter new file name")
 
