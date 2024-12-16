@@ -22,7 +22,7 @@ if not os.path.exists(UPLOADS_DIR):
 def configure_genai():
     genai.configure(api_key=API_KEY)
     return genai.GenerativeModel(
-        "gemini-1.5-flash-latest",
+        "gemini-2.0-flash-exp",
         generation_config=genai.types.GenerationConfig(temperature=TEMPERATURE),
         safety_settings=[
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
