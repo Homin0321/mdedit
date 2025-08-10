@@ -500,12 +500,8 @@ def main():
             st.write(f"{get_word_count(st.session_state.text)} words, {get_line_count(st.session_state.text)} lines")
             st.session_state.height = st.slider("Text Box Height:", 100, 1000, 600, 100)
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Edit", "Wizard", "Preview", "Slide"])
-
-    with tab1:
-        st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
-
-    with tab2:
+        # Wizard UI elements moved from tab2
+        st.subheader("Wizard")
         model = configure_genai()
         prompts = (
             "Prompt",
@@ -520,24 +516,18 @@ def main():
             "Prepare Presentation",
             "Format in Markdown",
         )
-        result = ''
-        col1, col2, col3, col4 = st.columns([3, 2, 9, 2])
-        with col1:
-            selected_prompt = st.selectbox("Prompt:", prompts, label_visibility="collapsed")
-        with col2:
-            language = st.selectbox("Language:", ("Korean", "English"), label_visibility="collapsed")
-        with col3:
-            st.session_state.prompt = get_command(selected_prompt, language)
-            prompt = st.text_input("Input:", value=st.session_state.prompt, label_visibility="collapsed")
-        with col4:
-            if st.button("Go", use_container_width=True):
-                result = ask_magic(model, prompt)
+        # Wizard UI (vertical layout)
+        selected_prompt = st.selectbox("Prompt:", prompts, key="wizard_prompt")
+        language = st.selectbox("Language:", ("Korean", "English"), key="wizard_language")
+        st.session_state.prompt = get_command(selected_prompt, language)
+        prompt = st.text_area("Input:", value=st.session_state.prompt, key="wizard_input", height=100)
+        if st.button("Go", use_container_width=True, key="wizard_go"):
+            st.session_state.text = ask_magic(model, prompt)
 
-        st.write(result)
+    tab1, tab3, tab4 = st.tabs(["Edit", "Preview", "Slide"])
 
-        if result:
-            with st.popover("View the Markdown source"):
-                st.code(result, language="markdown")
+    with tab1:
+        st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
 
     with tab3:
         toc, content = create_toc(st.session_state.text)
