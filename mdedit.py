@@ -22,7 +22,7 @@ if not os.path.exists(UPLOADS_DIR):
 def configure_genai():
     genai.configure(api_key=API_KEY)
     return genai.GenerativeModel(
-        "gemini-2.0-flash-exp",
+        "gemini-2.5-flash-lite",
         generation_config=genai.types.GenerationConfig(temperature=TEMPERATURE),
         safety_settings=[
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
@@ -184,22 +184,18 @@ def ask_magic(model, prompt):
 def get_command(selected_prompt, language, text=""):
     commands = {
         "Prompt": text,
-        "Rewrite": f"Rewrite the following text in a more understandable way, using {language}:\n\n{text}",
-        "Correct": f"Correct any grammatical or spelling errors in the following text, using {language}:\n\n{text}",
-        "Compose": f"Write a structured piece based on the following content in {language}:\n\n{text}",
-        "Blog": f"Write a blog based on the following content in {language}:\n\n{text}",
-        "Explain": f"Explain the following content in detail, in {language}:\n\n{text}",
-        "Summarize": f"Summarize the following text in {language}:\n\n{text}",
+        "Rewrite": f"Rewrite the following text to improve clarity, flow, and readability. Adapt the tone for a general audience. Use {language}:\n\n{text}",
+        "Correct": f"Correct any grammatical, spelling, and punctuation errors in the following text. The corrected text should be in {language}:\n\n{text}",
+        "Compose": f"Compose a well-structured article based on the following content, with a clear introduction, body, and conclusion. Use {language}:\n\n{text}",
         "Translate to": f"Translate the following text to {language}:\n\n{text}",
-        "Translate eng2kor": f"Translate the following English text, and display each English line followed by its corresponding Korean translation line:",
-        "Extract Key Points": f"Extract and list the key points from the following text in {language}:\n\n{text}",
-        "Format as Bullet Points": f"Convert the following text into a clear, bulleted list in {language}:\n\n{text}",
-        "Write Professional Email": f"Write a professional email in {language} based on the following details:\n\n{text}",
-        "Create Report Outline": f"Create an outline for a report based on the following content, using {language}:\n\n{text}",
-        "Prepare Presentation": f"Create a presentation outline based on the following text, using {language}:\n\n{text}",
-        "Generate Project Proposal": f"Generate a project proposal based on the following information in {language}:\n\n{text}",
-        "Format in Markdown": f"Convert the following text to properly formatted Markdown:\n\n{text}",
+        "Summarize": f"Provide a concise summary of the following text in {language}:\n\n{text}",
+        "Bullet Point Summary": f"Summarize the following text into concise bullet points, highlighting the key takeaways. Use {language}:\n\n{text}",
+        "Shorten Text": f"Condense the following text to be more concise, ideally under 100 words, while retaining the key message. Use {language}:\n\n{text}",
+        "Expand Text": f"Elaborate on and expand the following text, adding more details and relevant examples to provide a more comprehensive explanation. Use {language}:\n\n{text}",
+        "Prepare Presentation": f"Create a presentation slide in Markdown format based on the core keywords of the following text. Use '---' to separate each slide. Use {language}:\n\n{text}",
+        "Format in Markdown": f"Format the following text using Markdown. Use headings, lists, bolding, and other elements to improve structure and readability.\n\n{text}",
     }
+
     return commands.get(selected_prompt, text)
 
 @st.cache_data
@@ -507,24 +503,6 @@ def main():
     tab1, tab2, tab3, tab4 = st.tabs(["Edit", "Wizard", "Preview", "Slide"])
 
     with tab1:
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            regex = st.text_input(" ", placeholder="Regular Expression", label_visibility="collapsed")
-        with col2:
-            find_all = st.button("Find All", use_container_width=True)
-        with col3:
-            replace = st.text_input(" ", placeholder="Replacing Text", label_visibility="collapsed")
-        with col4:
-            replace_all = st.button("Replace All", use_container_width=True)
-        
-        if find_all:
-            highlight_matches(regex)
-        if replace_all:
-            try:
-                st.session_state.text = re.sub(regex, replace, st.session_state.text)
-            except re.error:
-                st.toast("Invalid regular expression. Please check your input.")
-
         st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
 
     with tab2:
@@ -534,17 +512,12 @@ def main():
             "Rewrite",
             "Correct",
             "Compose",
-            "Blog",
-            "Explain",
-            "Summarize",
             "Translate to",
-            "Translate eng2kor",
-            "Extract Key Points",
-            "Format as Bullet Points",
-            "Write Professional Email",
-            "Create Report Outline",
+            "Summarize",
+            "Bullet Point Summary",
+            "Shorten Text",
+            "Expand Text",
             "Prepare Presentation",
-            "Generate Project Proposal",
             "Format in Markdown",
         )
         result = ''
