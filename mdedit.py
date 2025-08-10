@@ -181,22 +181,26 @@ def ask_magic(model, prompt):
     response = model.generate_content(prompt)
     return response.text
 
-def get_command(selected_prompt, language, text=""):
-    commands = {
-        "Prompt": text,
-        "Rewrite": f"Rewrite the following text to improve clarity, flow, and readability. Adapt the tone for a general audience. Use {language}:\n\n{text}",
-        "Correct": f"Correct any grammatical, spelling, and punctuation errors in the following text. The corrected text should be in {language}:\n\n{text}",
-        "Compose": f"Compose a well-structured article based on the following content, with a clear introduction, body, and conclusion. Use {language}:\n\n{text}",
-        "Translate to": f"Translate the following text to {language}:\n\n{text}",
-        "Summarize": f"Provide a concise summary of the following text in {language}:\n\n{text}",
-        "Bullet Point Summary": f"Summarize the following text into concise bullet points, highlighting the key takeaways. Use {language}:\n\n{text}",
-        "Shorten Text": f"Condense the following text to be more concise, ideally under 100 words, while retaining the key message. Use {language}:\n\n{text}",
-        "Expand Text": f"Elaborate on and expand the following text, adding more details and relevant examples to provide a more comprehensive explanation. Use {language}:\n\n{text}",
-        "Prepare Presentation": f"Create a presentation slide in Markdown format based on the core keywords of the following text. Use '---' to separate each slide. Use {language}:\n\n{text}",
-        "Format in Markdown": f"Format the following text using Markdown. Use headings, lists, bolding, and other elements to improve structure and readability.\n\n{text}",
-    }
+# Move commands dictionary to global scope
+COMMANDS = {
+    "Prompt": "",
+    "Rewrite": "Rewrite the following text to improve clarity, flow, and readability. Adapt the tone for a general audience. Use {language}:\n\n{text}",
+    "Correct": "Correct any grammatical, spelling, and punctuation errors in the following text. The corrected text should be in {language}:\n\n{text}",
+    "Compose": "Compose a well-structured article based on the following content, with a clear introduction, body, and conclusion. Use {language}:\n\n{text}",
+    "Translate to": "Translate the following text to {language}:\n\n{text}",
+    "Summarize": "Provide a concise summary of the following text in {language}:\n\n{text}",
+    "Bullet Point Summary": "Summarize the following text into concise bullet points, highlighting the key takeaways. Use {language}:\n\n{text}",
+    "Shorten Text": "Condense the following text to be more concise, ideally under 100 words, while retaining the key message. Use {language}:\n\n{text}",
+    "Expand Text": "Elaborate on and expand the following text, adding more details and relevant examples to provide a more comprehensive explanation. Use {language}:\n\n{text}",
+    "Prepare Presentation": "Create a presentation slide in Markdown format based on the core keywords of the following text. Use '---' to separate each slide. Use {language}:\n\n{text}",
+    "Format in Markdown": "Format the following text using Markdown. Use headings, lists, bolding, and other elements to improve structure and readability.\n\n{text}",
+}
 
-    return commands.get(selected_prompt, text)
+def get_command(selected_prompt, language, text=""):
+    template = COMMANDS.get(selected_prompt, "")
+    if template == "":
+        return text
+    return template.format(language=language, text=text)
 
 @st.cache_data
 def create_toc(text):
@@ -332,7 +336,7 @@ def split_content(text):
     
     if st.session_state.separator_hr:
         parts = [part for page in parts for part in split_by_regex(r'---\s*$', page)]
-    
+
     if st.session_state.separator_h1:
         parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
     
@@ -341,9 +345,6 @@ def split_content(text):
     
     if st.session_state.separator_h3:
         parts = [part for page in parts for part in split_by_regex(r'^### .*$', page)]
-    
-    if st.session_state.separator_h4:
-        parts = [part for page in parts for part in split_by_regex(r'^#### .*$', page)]
     
     if st.session_state.separator_bold:
         parts = [part for page in parts for part in split_by_regex(r'^\*\*(.*?)\*\*$', page)]
@@ -443,8 +444,8 @@ def main():
     st.session_state.page_lines = st.session_state.get("page_lines", 20)
 
     st.session_state.separator_hr = st.session_state.get("separator_hr", True)
-    st.session_state.separator_h1 = st.session_state.get("separator_h1", True)
-    st.session_state.separator_h2 = st.session_state.get("separator_h2", True)
+    st.session_state.separator_h1 = st.session_state.get("separator_h1", False)
+    st.session_state.separator_h2 = st.session_state.get("separator_h2", False)
     st.session_state.separator_h3 = st.session_state.get("separator_h3", False)
     st.session_state.separator_h4 = st.session_state.get("separator_h4", False)
     st.session_state.separator_bold = st.session_state.get("separator_bold", False)
@@ -503,19 +504,8 @@ def main():
         # Wizard UI elements moved from tab2
         st.subheader("Wizard")
         model = configure_genai()
-        prompts = (
-            "Prompt",
-            "Rewrite",
-            "Correct",
-            "Compose",
-            "Translate to",
-            "Summarize",
-            "Bullet Point Summary",
-            "Shorten Text",
-            "Expand Text",
-            "Prepare Presentation",
-            "Format in Markdown",
-        )
+        # Use COMMANDS keys for prompts
+        prompts = tuple(COMMANDS.keys())
         # Wizard UI (vertical layout)
         selected_prompt = st.selectbox("Prompt:", prompts, key="wizard_prompt")
         language = st.selectbox("Language:", ("Korean", "English"), key="wizard_language")
@@ -583,6 +573,7 @@ def main():
                             key="page_lines",
                             on_change=resplit)
 
+        # Slide tab
         if len(pages) > 1:
             slider.slider("Go to", min_value=1, max_value=len(pages),
                             value=st.session_state.current_page + 1,
@@ -590,7 +581,13 @@ def main():
                             on_change=update_slider,
                             label_visibility="collapsed")
 
-        placeholder.markdown(pages[st.session_state.current_page], unsafe_allow_html=True)
+        slide_content = pages[st.session_state.current_page]
+
+        # '---'만 있는 라인을 삭제
+        if st.session_state.separator_hr:
+            slide_content = '\n'.join([line for line in slide_content.splitlines() if line.strip() != '---'])
+
+        placeholder.markdown(slide_content, unsafe_allow_html=True)
 
     auto_save()
     
