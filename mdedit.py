@@ -335,7 +335,9 @@ def split_content(text):
         parts = split_by_lines(st.session_state.page_lines, text)
     
     if st.session_state.separator_hr:
-        parts = [part for page in parts for part in split_by_regex(r'---\s*$', page)]
+        parts_gen = (part for page in parts for part in split_by_regex(r'---\s*$', page))
+        parts = [re.sub(r'---\s*\n', '', part).strip() + '\n' for part in parts_gen]
+        parts = [segment.strip() + '\n' for segment in parts]
 
     if st.session_state.separator_h1:
         parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
@@ -408,7 +410,8 @@ def find_index(lst, target):
 @st.dialog("Page Index", width="large")
 def show_index(toc):
     idx = st.session_state.current_page
-    selected = st.radio("Contents:", toc, index=idx, label_visibility="collapsed")
+    short_toc = [item[:60] + ("..." if len(item) > 60 else "") for item in toc]
+    selected = st.radio("Contents:", short_toc, index=idx, label_visibility="collapsed")
     if selected is not None:
         idx = find_index(toc, selected)
         if idx != -1 and st.session_state.current_page != idx:
@@ -514,12 +517,12 @@ def main():
         if st.button("Go", use_container_width=True, key="wizard_go"):
             st.session_state.text = ask_magic(model, prompt)
 
-    tab1, tab3, tab4 = st.tabs(["Edit", "Preview", "Slide"])
+    tab1, tab2, tab3 = st.tabs(["Edit", "Preview", "Slide"])
 
     with tab1:
         st.text_area("Edit:", key="text", height=st.session_state.height, label_visibility="collapsed")
 
-    with tab3:
+    with tab2:
         toc, content = create_toc(st.session_state.text)
         if toc:
             with st.popover("Table of Contents"):
@@ -529,7 +532,7 @@ def main():
             content = markdown_insert_images(content)
             st.markdown(content, unsafe_allow_html=True)
 
-    with tab4:
+    with tab3:
         pages = split_content(st.session_state.text)
         index = make_index(pages)
 
@@ -582,10 +585,6 @@ def main():
                             label_visibility="collapsed")
 
         slide_content = pages[st.session_state.current_page]
-
-        # '---'만 있는 라인을 삭제
-        if st.session_state.separator_hr:
-            slide_content = '\n'.join([line for line in slide_content.splitlines() if line.strip() != '---'])
 
         placeholder.markdown(slide_content, unsafe_allow_html=True)
 
