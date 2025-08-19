@@ -173,8 +173,17 @@ def find_index(lst, target):
 @st.dialog("Page Index", width="large")
 def show_index(toc):
     idx = st.session_state.current_page
-    short_toc = [item[:60] + ("..." if len(item) > 60 else "") for item in toc]
-    selected = st.radio("Contents:", short_toc, index=idx, label_visibility="collapsed")
+    
+    def format_func(item):
+        return item[:60] + ("..." if len(item) > 60 else "")
+
+    selected = st.radio(
+        "Contents:",
+        toc,
+        index=idx,
+        format_func=format_func,
+        label_visibility="collapsed"
+    )
     if selected is not None:
         idx = find_index(toc, selected)
         if idx != -1 and st.session_state.current_page != idx:
@@ -278,7 +287,6 @@ if uploaded_md_file:
                 st.checkbox(r"\** ~ **", key="separator_bold", on_change=resplit)
                 st.checkbox("Page length", key="separator_page_length", on_change=resplit)
                 st.slider("Select page length", min_value=1, max_value=30,
-                            value=20,
                             key="page_lines",
                             on_change=resplit)
 
