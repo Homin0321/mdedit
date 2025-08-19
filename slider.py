@@ -128,7 +128,8 @@ def update_slider():
 def is_markdown_heading(line):
     # Check if line is a markdown heading (level 1, 2, or 3)
     stripped_line = line.strip()
-    return (stripped_line.startswith('#') or 
+    return (
+            stripped_line.startswith('#') or 
             stripped_line.startswith('##') or 
             stripped_line.startswith('###') or 
             stripped_line.startswith('####'))
@@ -212,6 +213,8 @@ st.session_state.separator_h3 = st.session_state.get("separator_h3", False)
 st.session_state.separator_h4 = st.session_state.get("separator_h4", False)
 st.session_state.separator_bold = st.session_state.get("separator_bold", False)
 st.session_state.separator_page_length = st.session_state.get("separator_page_length", False)
+st.session_state.markdown_content = st.session_state.get("markdown_content", "")
+st.session_state.last_uploaded_file_id = st.session_state.get("last_uploaded_file_id", None)
 
 with st.sidebar:
     st.title("Markdown Viewer")
@@ -225,7 +228,9 @@ with st.sidebar:
     )
 
 if uploaded_md_file:
-    markdown_content = uploaded_md_file.getvalue().decode("utf-8")
+    if st.session_state.get('last_uploaded_file_id') != uploaded_md_file.file_id:
+        st.session_state.markdown_content = uploaded_md_file.getvalue().decode("utf-8")
+        st.session_state.last_uploaded_file_id = uploaded_md_file.file_id
 
     def replace_image_path(match):
         alt_text = match.group(1)
@@ -236,13 +241,13 @@ if uploaded_md_file:
         return f"![{alt_text}]({new_url})"
 
     # Regex to find local image markdown syntax: ![alt text](path)
-    # (?!https?:\/\/) ensures it's not a web URL
-    processed_markdown = re.sub(r"!\[(.*?)\]\((?!https?:\/\/)(.*?)\)", replace_image_path, markdown_content)
+    # (?!https?:\\/\/) ensures it's not a web URL
+    processed_markdown = re.sub(r"!\[(.*?)\]\((?!https?://)(.*?)\)", replace_image_path, st.session_state.markdown_content)
 
     tab1, tab2, tab3 = st.tabs(["Source", "One Page", "Slides"])
 
     with tab1:
-        st.text_area("Edit", markdown_content, height=600, label_visibility="collapsed")
+        st.text_area("Edit", key="markdown_content", height=600, label_visibility="collapsed")
 
     with tab2:
         st.markdown(processed_markdown, unsafe_allow_html=True)
@@ -279,12 +284,12 @@ if uploaded_md_file:
 
         with col5:
             with st.popover("Split"):
-                st.checkbox(r"\---", key="separator_hr", on_change=resplit)
-                st.checkbox(r"\#", key="separator_h1", on_change=resplit)
-                st.checkbox(r"\##", key="separator_h2", on_change=resplit)
-                st.checkbox(r"\###", key="separator_h3", on_change=resplit)
-                st.checkbox(r"\####", key="separator_h4", on_change=resplit)
-                st.checkbox(r"\** ~ **", key="separator_bold", on_change=resplit)
+                st.checkbox(r"\\---", key="separator_hr", on_change=resplit)
+                st.checkbox(r"\\#", key="separator_h1", on_change=resplit)
+                st.checkbox(r"\\##", key="separator_h2", on_change=resplit)
+                st.checkbox(r"\\###", key="separator_h3", on_change=resplit)
+                st.checkbox(r"\\####", key="separator_h4", on_change=resplit)
+                st.checkbox(r"\\** ~ **", key="separator_bold", on_change=resplit)
                 st.checkbox("Page length", key="separator_page_length", on_change=resplit)
                 st.slider("Select page length", min_value=1, max_value=30,
                             key="page_lines",
