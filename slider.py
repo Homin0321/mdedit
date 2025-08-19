@@ -90,6 +90,23 @@ def split_by_lines(num: int, text: str) -> list[str]:
     
     return parts
 
+def split_after_image(text: str) -> list[str]:
+    """
+    Splits the text into pages after each image markdown syntax.
+    """
+    parts = []
+    current_part = ""
+    for line in text.splitlines():
+        current_part += line + "\n"
+        # Check if the line contains an image markdown syntax
+        if re.match(r"!\[.*?\]\(.*?\)", line.strip()):
+            parts.append(current_part)
+            current_part = ""
+    # Add any remaining content
+    if current_part:
+        parts.append(current_part)
+    return parts
+
 @st.cache_data
 def split_content(text):
     parts = [text]
@@ -101,7 +118,8 @@ def split_content(text):
         (st.session_state.separator_h1, lambda x: split_by_regex(r'^# .*$', x)),
         (st.session_state.separator_h2, lambda x: split_by_regex(r'^## .*$', x)),
         (st.session_state.separator_h3, lambda x: split_by_regex(r'^### .*$', x)),
-        (st.session_state.separator_bold, lambda x: split_by_regex(r'^\*\*(.*?)\*\*$', x))
+        (st.session_state.separator_bold, lambda x: split_by_regex(r'^\*\*(.*?)\*\*$', x)),
+        (st.session_state.separator_after_image, split_after_image)
     ]
     
     for condition, split_func in split_conditions:
@@ -210,7 +228,8 @@ st.session_state.separator_h2 = st.session_state.get("separator_h2", False)
 st.session_state.separator_h3 = st.session_state.get("separator_h3", False)
 st.session_state.separator_h4 = st.session_state.get("separator_h4", False)
 st.session_state.separator_bold = st.session_state.get("separator_bold", False)
-st.session_state.separator_page_length = st.session_state.get("separator_page_length", False)
+st.session_state.separator_after_image = st.session_state.get("separator_after_image", True)
+st.session_state.separator_page_length = st.session_state.get("separator_page_length", True)
 st.session_state.markdown_content = st.session_state.get("markdown_content", "")
 st.session_state.last_uploaded_file_id = st.session_state.get("last_uploaded_file_id", None)
 
@@ -292,16 +311,15 @@ if uploaded_md_file:
 
         with col5:
             with st.popover("Split"):
-                st.checkbox(r"\\---", key="separator_hr", on_change=resplit)
-                st.checkbox(r"\\#", key="separator_h1", on_change=resplit)
-                st.checkbox(r"\\##", key="separator_h2", on_change=resplit)
-                st.checkbox(r"\\###", key="separator_h3", on_change=resplit)
-                st.checkbox(r"\\####", key="separator_h4", on_change=resplit)
-                st.checkbox(r"\\** ~ **", key="separator_bold", on_change=resplit)
+                st.checkbox(r"\---", key="separator_hr", on_change=resplit)
+                st.checkbox(r"\#", key="separator_h1", on_change=resplit)
+                st.checkbox(r"\##", key="separator_h2", on_change=resplit)
+                st.checkbox(r"\###", key="separator_h3", on_change=resplit)
+                st.checkbox(r"\####", key="separator_h4", on_change=resplit)
+                st.checkbox(r"\** ~ **", key="separator_bold", on_change=resplit)
+                st.checkbox("After image", key="separator_after_image", on_change=resplit)
                 st.checkbox("Page length", key="separator_page_length", on_change=resplit)
-                st.slider("Select page length", min_value=1, max_value=30,
-                            key="page_lines",
-                            on_change=resplit)
+                st.slider("Select page length", min_value=1, max_value=30, key="page_lines", on_change=resplit)
 
         if len(pages) > 1:
             slider.slider("Go to", min_value=1, max_value=len(pages),
