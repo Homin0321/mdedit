@@ -2,9 +2,14 @@ import streamlit as st
 import re
 import os
 
+# 파일 상단에 추가
+DEFAULT_PAGE_LINES = 20
+DEFAULT_IMAGE_SERVER = "http://127.0.0.1:8080/"
+MARKDOWN_FILE_TYPES = ["md"]
+
 st.set_page_config(layout="wide")
 
-def split_by_regex(regex, text):
+def split_by_regex(regex: str, text: str) -> list[str]:
     parts = []
     current_part = ""
     in_code_block = False
@@ -41,7 +46,7 @@ def split_by_regex(regex, text):
     
     return parts
 
-def split_by_lines(num, text):
+def split_by_lines(num: int, text: str) -> list[str]:
     parts = []
     lines = text.splitlines()
     
@@ -89,30 +94,21 @@ def split_by_lines(num, text):
 def split_content(text):
     parts = [text]
     
-    if st.session_state.separator_page_length:
-        parts = split_by_lines(st.session_state.page_lines, text)
+    # 모든 분할 조건을 리스트로 관리
+    split_conditions = [
+        (st.session_state.separator_page_length, lambda x: split_by_lines(st.session_state.page_lines, x)),
+        (st.session_state.separator_hr, lambda x: split_by_regex(r'---\s*$', x)),
+        (st.session_state.separator_h1, lambda x: split_by_regex(r'^# .*$', x)),
+        (st.session_state.separator_h2, lambda x: split_by_regex(r'^## .*$', x)),
+        (st.session_state.separator_h3, lambda x: split_by_regex(r'^### .*$', x)),
+        (st.session_state.separator_bold, lambda x: split_by_regex(r'^\*\*(.*?)\*\*$', x))
+    ]
     
-    if st.session_state.separator_hr:
-        parts_gen = (part for page in parts for part in split_by_regex(r'---\s*$', page))
-        parts = [re.sub(r'---\s*\n', '', part).strip() + '\n' for part in parts_gen]
-        parts = [segment.strip() + '\n' for segment in parts]
-
-    if st.session_state.separator_h1:
-        parts = [part for page in parts for part in split_by_regex(r'^# .*$', page)]
+    for condition, split_func in split_conditions:
+        if condition:
+            parts = [part for page in parts for part in split_func(page)]
     
-    if st.session_state.separator_h2:
-        parts = [part for page in parts for part in split_by_regex(r'^## .*$', page)]
-    
-    if st.session_state.separator_h3:
-        parts = [part for page in parts for part in split_by_regex(r'^### .*$', page)]
-    
-    if st.session_state.separator_bold:
-        parts = [part for page in parts for part in split_by_regex(r'^\*\*(.*?)\*\*$', page)]
-    
-    if len(parts) > 1:
-        return parts
-    else:
-        return [text]
+    return parts if len(parts) > 1 else [text]
 
 def resplit():
     # Clear the current page when changing separators
@@ -125,6 +121,7 @@ def update_slider():
     if page != st.session_state.current_page:
         st.session_state.current_page = page
 
+@st.cache_data
 def is_markdown_heading(line):
     # Check if line is a markdown heading (level 1, 2, or 3)
     stripped_line = line.strip()
@@ -151,6 +148,7 @@ def split_at_last_heading(text):
     
     return ['\n'.join(lines) + '\n']
 
+@st.cache_data
 def remove_decorators(text):
     # Remove leading hashes
     text = text.lstrip('#')
@@ -232,17 +230,27 @@ if uploaded_md_file:
         st.session_state.markdown_content = uploaded_md_file.getvalue().decode("utf-8")
         st.session_state.last_uploaded_file_id = uploaded_md_file.file_id
 
-    def replace_image_path(match):
+    def validate_image_url(url):
+        if not url:
+            return "http://127.0.0.1:8080/"
+        try:
+            from urllib.parse import urlparse
+            result = urlparse(url)
+            return url if all([result.scheme, result.netloc]) else "http://127.0.0.1:8080/"
+        except:
+            return "http://127.0.0.1:8080/"
+
+    def replace_image_path(match, base_url):
         alt_text = match.group(1)
         original_path = match.group(2)
         image_filename = os.path.basename(original_path)
-        base_url = image_server_url if image_server_url.endswith('/') else image_server_url + '/'
+        base_url = base_url if base_url.endswith('/') else base_url + '/'
         new_url = f"{base_url}{image_filename}"
         return f"![{alt_text}]({new_url})"
 
     # Regex to find local image markdown syntax: ![alt text](path)
     # (?!https?:\\/\/) ensures it's not a web URL
-    processed_markdown = re.sub(r"!\[(.*?)\]\((?!https?://)(.*?)\)", replace_image_path, st.session_state.markdown_content)
+    processed_markdown = re.sub(r"!\[(.*?)\]\((?!https?://)(.*?)\)", lambda m: replace_image_path(m, image_server_url), st.session_state.markdown_content)
 
     tab1, tab2, tab3 = st.tabs(["Source", "One Page", "Slides"])
 
